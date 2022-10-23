@@ -22,7 +22,6 @@ endif
 TEST_CFLAGS = -g -O3 -funroll-all-loops
 #ABI = -mabi=ilp32 -march=rv32imc
 ABI = -mabi=ilp32 -march=rv32im
-#ABI = -mabi=ilp64 -march=rv64imc
 
 # Allow snapshot override
 target = default
