@@ -1,0 +1,3 @@
+[submodule "ovi/bsc-vector-accelerator"]
+	path = ovi/bsc-vector-accelerator
+	url = https://gitlab.bsc.es/epac/bsc/bsc-vector-accelerator.git

@@ -1,6 +1,7 @@
 
 //General
 `define OVI_SBID_WIDTH 5
+`define OVI_MEMDATA_WIDTH 512
 
 //Issuing
 `define OVI_INSTR_WIDTH 32

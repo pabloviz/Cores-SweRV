@@ -7,12 +7,20 @@ module ovi #()
 	input core_issue_bus CORE_ISSUE,
 	output core_completed_bus CORE_COMPLETED,
 	output CORE_HALT,
+	//Misssing load, store, mask signals!
 
 	//With VPU
-	input ISSUE_CREDIT,
+	input VPU_ISSUE_CREDIT,
 	input vpu_completed_bus VPU_COMPLETED,
-	output vpu_issue_bus VPU_ISSUE
-//	output vpu_dispatch_bus 
+	input VPU_SYNC_START,
+	input vpu_store_bus VPU_STORE,
+	input VPU_STORE_CREDIT, 
+	input vpu_mask_idx_bus VPU_MASK_IDX,
+	output vpu_issue_bus VPU_ISSUE,
+	output vpu_dispatch_bus VPU_DISPATCH,
+	output vpu_memop_bus VPU_MEMOP, 
+	output vpu_load_bus VPU_LOAD,
+	output VPU_MASK_IDX_CREDIT
 	
 );
 
@@ -26,11 +34,10 @@ reg [3:0] issue_credits /* verilator public */= 4;
 v_csr vcsr;
 
 
-
 //Asigns
-assign CORE_HALT = curr_state==WAIT_ISSUE && issue_credits>0? 1'b0 : 1'b1;
+assign CORE_HALT = curr_state!=WAIT_ISSUE || issue_credits==0? 1'b1 : 1'b0;
 
-//Issue bus
+//Issue bus (construct it from core issue)
 assign VPU_ISSUE.instr = CORE_ISSUE.instr;
 assign VPU_ISSUE.scalar_opnd = 64'b0;
 assign VPU_ISSUE.sb_id = `OVI_SBID_WIDTH'b0;
@@ -43,10 +50,30 @@ assign VPU_ISSUE.vcsr.vsew = CORE_ISSUE.sew;
 assign VPU_ISSUE.vcsr.vill = 1'b0;
 assign VPU_ISSUE.valid = (curr_state==WAIT_ISSUE && issue_credits>0 && CORE_ISSUE.valid) ?   1'b1 : 1'b0;
 
-//Completed bus
+//Dispatch: Always on issue (for now)
+assign VPU_DISPATCH.kill = 1'b0;
+assign VPU_DISPATCH.sb_id = VPU_ISSUE.sb_id;
+assign VPU_DISPATCH.next_senior = VPU_ISSUE.valid;
+
+//Completed bus (just pass data)
 assign CORE_COMPLETED.data = VPU_COMPLETED.dest_reg;
 assign CORE_COMPLETED.valid = VPU_COMPLETED.valid; //This may change in the future
 
+//Memop (right now at 0)
+assign VPU_MEMOP.sync_end = 1'b0;
+
+//Load (right now at 0)
+assign VPU_LOAD.valid = 1'b0;
+assign VPU_LOAD.mask_valid = 1'b0;
+
+//Store (right now at 0)
+assign VPU_STORE.valid = 1'b0;
+
+//Mask (right now at 0)
+assign VPU_MASK_IDX.valid = 1'b0;
+assign VPU_MASK_IDX.last_idx = 1'b0;
+//Mask credit (right now at 0)
+assign VPU_MASK_IDX_CREDIT = 1'b0;
 
 
 always @(posedge CLK)
@@ -70,7 +97,7 @@ begin
 		end
 	endcase
 
-	if (ISSUE_CREDIT) begin
+	if (VPU_ISSUE_CREDIT) begin
 		issue_credits <= issue_credits + 1;
 	end
 	
