@@ -6,10 +6,10 @@
 //Issuing
 `define OVI_INSTR_WIDTH 32
 `define OVI_SCALAROPND_WIDTH 64
-`define OVI_VL_WIDTH 15
-`define OVI_SEW_WIDTH 3
+`define OVI_VL_WIDTH 15 //12
+`define OVI_SEW_WIDTH 2
 
 //Completing
 `define OVI_DATA_WIDTH 64
 `define OVI_FFLAGS_WIDTH 5
-`define OVI_VSTART_WIDTH 14
+`define OVI_VSTART_WIDTH 14 //12

@@ -8,7 +8,7 @@ interface v_csr();
 	wire [2:0] frm /* verilator public */;
 	wire [1:0] vxrm /* verilator public */;
 	wire [`OVI_VL_WIDTH-1:0] vl /* verilator public */;
-	wire [13:0] vstart /* verilator public */;
+	wire [`OVI_VSTART_WIDTH-1:0] vstart /* verilator public */;
 endinterface
 
 interface seq_id_bus();

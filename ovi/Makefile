@@ -46,11 +46,13 @@ bsc-vector-accelerator/src/modules/vector_lane/functional_unit/fpu-encrypted/src
 
 
 build_sv:
-	verilator -cc $(Includes) $(Srcs) --unroll-count 70000 --unroll-stmts 70000 -Wno-fatal --top-module top --exe testbench/sim_main.cpp --autoflush
+	verilator -cc $(Includes) $(Srcs) --unroll-count 70000 --unroll-stmts 70000 -Wno-fatal --top-module top --exe --trace testbench/sim_main.cpp --autoflush
 build_cpp: build_sv
 	make -j -C obj_dir/ -f Vtop.mk OP_FAST="-Os"
 run: build_cpp
-	obj_dir/Vtop	
+	obj_dir/Vtop
 onlyrun: 
-	obj_dir/Vtop	
+	obj_dir/Vtop
+clean:
+	rm -rf obj_dir sim.vcd
 

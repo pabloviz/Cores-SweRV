@@ -160,7 +160,9 @@ vpu_core #() core
 initial begin
 	$display("Starting simulation:");
 end
-reg [64-1:0] debug_counter /* verilator public */ ;
+
+//reg [64-1:0] debug_counter /* verilator public */ ;
+/*
 reg [2:0] counter_completed = 0;
 reg delay_completed = 0;
 reg active = 0;
@@ -186,6 +188,7 @@ begin
 		$finish;
 	end
 end
+*/
 //assign vpu_completed.valid = delay_completed;
 
 endmodule
