@@ -9,7 +9,7 @@ module automata #()
 );
 
 //Declare types
-typedef enum reg [1:0] {REST, READ_AND_ISSUE, WAIT_ANSWER} state_t;
+typedef enum reg [2:0] {REST, READ_AND_ISSUE, WAIT_ANSWER, RECEIVE_DATA} state_t;
 
 
 //Declare wires / regs
@@ -28,8 +28,9 @@ assign CORE_ISSUE.vl = vl;
 assign CORE_ISSUE.sew = sew;
 assign CORE_ISSUE.valid = (curr_state==READ_AND_ISSUE && !halt) ? 1'b1 : 1'b0;
 
-
-
+wire [64-1:0] bits = sew==0 ? 8 : sew==1 ? 16 : sew==2? 32 : 64;
+wire [64-1:0] n_packets = (vl*bits)/512;
+reg [64-1:0] received_packets = 0;
 //Instruction memory
 reg [6-1:0] mem_ptr = 0;
 reg [`OVI_INSTR_WIDTH-1:0] MEM [64]; //instruction memory, 64 instructions of 32 bits
@@ -65,6 +66,7 @@ begin
 			//Change state
 			mem_ptr <= mem_ptr + 1;
 			curr_state <= WAIT_ANSWER;
+			received_packets <= 0;
 		end
 
 		WAIT_ANSWER: begin
@@ -75,6 +77,20 @@ begin
 				end else begin
 					curr_state <= REST;
 				end
+			end
+			else if (CORE_SYNC_START) begin
+				curr_state <= RECEIVE_DATA;
+			end
+		end
+		RECEIVE_DATA: begin
+			if (received_packets == n_packets) begin
+				//sync_end = 1
+				curr_state <= WAIT_ANSWER;
+			end
+			else begin
+				if (CORE_STORE_VALID) begin
+				//fakememory[received_packets] = coredata
+				receive_packets <= receive_packets+1;
 			end
 		end
 
