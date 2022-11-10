@@ -78,7 +78,7 @@ begin
 					curr_state <= REST;
 				end
 			end
-			else if (CORE_SYNC_START) begin
+			else if (0) begin //core sync start & instruction_is_store
 				curr_state <= RECEIVE_DATA;
 			end
 		end
@@ -88,9 +88,10 @@ begin
 				curr_state <= WAIT_ANSWER;
 			end
 			else begin
-				if (CORE_STORE_VALID) begin
+				if (0) begin //store data valid
 				//fakememory[received_packets] = coredata
-				receive_packets <= receive_packets+1;
+				received_packets <= received_packets+1;
+				end
 			end
 		end
 
