@@ -14,18 +14,18 @@ module ovi #()
 	input vpu_completed_bus VPU_COMPLETED,
 	input VPU_SYNC_START,
 	input vpu_store_bus VPU_STORE,
-	input VPU_STORE_CREDIT, 
 	input vpu_mask_idx_bus VPU_MASK_IDX,
 	output vpu_issue_bus VPU_ISSUE,
 	output vpu_dispatch_bus VPU_DISPATCH,
 	output vpu_memop_bus VPU_MEMOP, 
 	output vpu_load_bus VPU_LOAD,
+	output VPU_STORE_CREDIT, 
 	output VPU_MASK_IDX_CREDIT
 	
 );
 
 //Declare types
-typedef enum reg [1:0] {WAIT_ISSUE, WAIT_COMPLETED} state_t;
+typedef enum reg [1:0] {WAIT_ISSUE, WAIT_ANSWER, RECEIVE_DATA, SEND_DATA} state_t;
 
 
 //Declare wires / regs
@@ -33,6 +33,15 @@ state_t curr_state /* verilator public */ = WAIT_ISSUE;
 reg [3:0] issue_credits /* verilator public */= 4;
 v_csr vcsr;
 reg [`OVI_SBID_WIDTH-1:0] sbid_counter = 0;
+reg [4:0] store_credits = 1; //1 is easier to debug :)
+
+//Load Store
+reg instr_is_store = 0;
+reg instr_is_load = 0;
+reg [64-1:0] n_packets; 
+reg [64-1:0] transmited_packets = 0;
+reg [`OVI_MEMDATA_WIDTH-1:0] BUFFER_STORE [32];
+wire [64-1:0] instrlogbits = CORE_ISSUE.sew==0 ? 3 : CORE_ISSUE.sew==1 ? 4 : CORE_ISSUE.sew==2? 5 : 6;
 
 
 //Asigns
@@ -61,14 +70,16 @@ assign CORE_COMPLETED.data = VPU_COMPLETED.dest_reg;
 assign CORE_COMPLETED.valid = VPU_COMPLETED.valid; //This may change in the future
 
 //Memop (right now at 0)
-assign VPU_MEMOP.sync_end = 1'b0;
+assign VPU_MEMOP.sync_end = (curr_state == RECEIVE_DATA) && (transmited_packets == n_packets) ? 1'b1 : 1'b0;
+assign VPU_MEMOP.sb_id = sbid_counter - 1;
 
 //Load (right now at 0)
 assign VPU_LOAD.valid = 1'b0;
 assign VPU_LOAD.mask_valid = 1'b0;
 
-//Store (right now at 0)
-assign VPU_STORE.valid = 1'b0;
+//Store
+assign VPU_STORE_CREDIT = VPU_STORE.valid;
+
 
 //Mask (right now at 0)
 assign VPU_MASK_IDX.valid = 1'b0;
@@ -76,6 +87,14 @@ assign VPU_MASK_IDX.last_idx = 1'b0;
 //Mask credit (right now at 0)
 assign VPU_MASK_IDX_CREDIT = 1'b0;
 
+initial
+begin
+    integer i;
+    for (i=0; i < 32; i=i+1)
+    begin
+        BUFFER_STORE[i] = 512'b0;
+    end
+ end
 
 always @(posedge CLK)
 begin
@@ -85,14 +104,32 @@ begin
 			if (issue_credits > 0 && CORE_ISSUE.valid) begin
 				issue_credits <= issue_credits - 1;
 				sbid_counter <= sbid_counter + 1;
+				transmited_packets <= 0;
+				n_packets <= (CORE_ISSUE.vl<<instrlogbits)/512 + (((CORE_ISSUE.vl<<instrlogbits)%512!=0)? 1 : 0);
+				instr_is_load <= CORE_ISSUE.instr[6:0] == 7'b0000111;
+				instr_is_store <= CORE_ISSUE.instr[6:0] == 7'b0100111;
 				//Change state
-				curr_state <= WAIT_COMPLETED;
+				curr_state <= WAIT_ANSWER;
 			end
 		end
-		WAIT_COMPLETED: begin
+		WAIT_ANSWER: begin
 			//Change state
 			if (VPU_COMPLETED.valid) begin
 				curr_state <= WAIT_ISSUE;
+			end
+			else if (VPU_SYNC_START) begin 
+				curr_state <= instr_is_store ? RECEIVE_DATA : instr_is_load ? SEND_DATA : WAIT_ANSWER;
+			end
+		end
+		RECEIVE_DATA: begin
+			if (transmited_packets == n_packets) begin
+				curr_state <= WAIT_ANSWER;
+			end
+			else begin
+				if (VPU_STORE.valid) begin 
+					BUFFER_STORE[transmited_packets] <= VPU_STORE.data;
+					transmited_packets <= transmited_packets+1;
+				end
 			end
 		end
 		default: begin

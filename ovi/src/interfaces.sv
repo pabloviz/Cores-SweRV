@@ -19,8 +19,8 @@ interface seq_id_bus();
 	wire [4:0] v_reg /* verilator public*/; //4:0
 endinterface
 
-
-//Core -> OVI interfaces (reduced from OVI specs)
+//=============================================
+//Core -> OVI interfaces (reduced from OVI specs, just the necessary signals)
 interface core_issue_bus();
 	wire [`OVI_INSTR_WIDTH-1:0] instr /* verilator public */;
 	wire [`OVI_VL_WIDTH-1:0] vl /* verilator public */;
@@ -32,8 +32,11 @@ interface core_completed_bus();
 	wire [`OVI_DATA_WIDTH-1:0] data /* verilator public */;
 	wire [0:0] valid /* verilator public */;
 endinterface
+
+//=============================================
 	
 
+//=============================================
 //OVI <-> Vpu interfaces (from the OVI specs)
 interface vpu_issue_bus();
 	wire [`OVI_INSTR_WIDTH-1:0] instr /* verilator public */;
@@ -83,6 +86,7 @@ interface vpu_mask_idx_bus();
 	wire [0:0] valid /* verilator public */;
 	wire [0:0] last_idx /* verilator public */;
 endinterface
+//=============================================
 
 
 
