@@ -27,7 +27,7 @@ int main(int argc, char **argv, char **env){
 
 
 	//while (!Verilated::gotFinish()){
-	while (main_time != 800){
+	while (main_time != 1500){
 		if (top->CLK){
 			std::cout << "Cycle counter: " <<  main_time/2;
 			std::cout << "\tAut_state: " << (int)top->top->core_automata->curr_state;

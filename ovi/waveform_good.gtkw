@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Sat Nov 12 23:18:39 2022
+[*] Mon Nov 21 20:40:21 2022
 [*]
 [dumpfile] "/home/pvizcaino/master/PD/Cores-SweRV/ovi/sim.vcd"
-[dumpfile_mtime] "Sat Nov 12 23:18:27 2022"
-[dumpfile_size] 6247011
+[dumpfile_mtime] "Mon Nov 21 20:23:11 2022"
+[dumpfile_size] 6526757
 [savefile] "/home/pvizcaino/master/PD/Cores-SweRV/ovi/waveform_good.gtkw"
-[timestart] 419
-[size] 1499 955
+[timestart] 1
+[size] 1863 980
 [pos] -1 -1
-*-4.986216 484 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-6.917315 44 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] TOP.
 [treeopen] TOP.top.
 [treeopen] TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.
@@ -26,10 +26,10 @@
 [treeopen] TOP.top.core.multi_lane_instance(1).VECTOR_LANE_inst.
 [treeopen] TOP.top.core.vcu_splitter_inst.
 [treeopen] TOP.top.ovi_module.
-[sst_width] 361
-[signals_width] 460
+[sst_width] 224
+[signals_width] 340
 [sst_expanded] 1
-[sst_vpaned_height] 597
+[sst_vpaned_height] 668
 @28
 TOP.top.CLK
 TOP.top.RESET
@@ -52,13 +52,19 @@ TOP.top.ovi_module.instr_is_store
 @22
 TOP.top.ovi_module.transmited_packets[63:0]
 TOP.top.ovi_module.n_packets[63:0]
-@23
-TOP.top.ovi_module.BUFFER_STORE(0)[511:0]
+@200
+-
 @22
+TOP.top.ovi_module.BUFFER_LOAD(0)[511:0]
+TOP.top.ovi_module.BUFFER_LOAD(1)[511:0]
+TOP.top.ovi_module.BUFFER_LOAD(2)[511:0]
+@200
+-
+@22
+TOP.top.ovi_module.BUFFER_STORE(0)[511:0]
 TOP.top.ovi_module.BUFFER_STORE(1)[511:0]
 TOP.top.ovi_module.BUFFER_STORE(2)[511:0]
 @200
--
 -
 -TOP module
 -Vpu issue
@@ -82,6 +88,14 @@ TOP.top.vpu_dispatch.sb_id[4:0]
 @28
 TOP.top.ovi_module.VPU_SYNC_START
 @200
+-vpu memop
+@22
+TOP.top.vpu_memop.sb_id[4:0]
+@28
+TOP.top.vpu_memop.sync_end[0]
+@22
+TOP.top.vpu_memop.vstart_vlfof[14:0]
+@201
 -vpu load
 @22
 TOP.top.vpu_load.data[511:0]
@@ -89,6 +103,11 @@ TOP.top.vpu_load.mask[63:0]
 @28
 TOP.top.vpu_load.mask_valid[0]
 TOP.top.vpu_load.valid[0]
+@24
+TOP.top.ovi_module.el_count[6:0]
+TOP.top.ovi_module.el_id[10:0]
+@22
+TOP.top.vpu_seqid[33:0]
 @200
 -vpu store
 @22
@@ -99,14 +118,6 @@ TOP.top.vpu_store.valid[0]
 -vpu_store_credit
 @28
 TOP.top.ovi_module.VPU_STORE_CREDIT
-@200
--vpu memop
-@22
-TOP.top.vpu_memop.sb_id[4:0]
-@28
-TOP.top.vpu_memop.sync_end[0]
-@22
-TOP.top.vpu_memop.vstart_vlfof[14:0]
 @200
 -vpu completed
 @24
@@ -122,27 +133,40 @@ TOP.top.vpu_completed.vxsat[0]
 TOP.top.vpu_completed.valid[0]
 @200
 -
-@28
-TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.is_reduction
-@200
 -LANES
 @28
 TOP.top.CLK
+@22
+TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.lane_wb_data[63:0]
+TOP.top.core.multi_lane_instance(1).VECTOR_LANE_inst.lane_wb_data[63:0]
+TOP.top.core.multi_lane_instance(2).VECTOR_LANE_inst.lane_wb_data[63:0]
+TOP.top.core.multi_lane_instance(3).VECTOR_LANE_inst.lane_wb_data[63:0]
+TOP.top.core.multi_lane_instance(4).VECTOR_LANE_inst.lane_wb_data[63:0]
+TOP.top.core.multi_lane_instance(5).VECTOR_LANE_inst.lane_wb_data[63:0]
+TOP.top.core.multi_lane_instance(6).VECTOR_LANE_inst.lane_wb_data[63:0]
+TOP.top.core.multi_lane_instance(7).VECTOR_LANE_inst.lane_wb_data[63:0]
+@28
 TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.wb_valid
+TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.wb_valid
+TOP.top.core.multi_lane_instance(1).VECTOR_LANE_inst.wb_valid
+TOP.top.core.multi_lane_instance(2).VECTOR_LANE_inst.wb_valid
+TOP.top.core.multi_lane_instance(3).VECTOR_LANE_inst.wb_valid
+TOP.top.core.multi_lane_instance(4).VECTOR_LANE_inst.wb_valid
+TOP.top.core.multi_lane_instance(5).VECTOR_LANE_inst.wb_valid
+TOP.top.core.multi_lane_instance(6).VECTOR_LANE_inst.wb_valid
+TOP.top.core.multi_lane_instance(7).VECTOR_LANE_inst.wb_valid
 @200
 -
 -
 -UNPACKER
 @24
 TOP.top.core.unpacker_inst.sew[1:0]
+@28
+TOP.top.core.unpacker_inst.use_only_vs2
+@24
 TOP.top.core.unpacker_inst.vlen[11:0]
 @28
 TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.is_reduction
-TOP.top.core.unpacker_inst.use_only_vs2
-@200
--LANES
-@28
-TOP.top.CLK
 TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.new_instr_i
 TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.pablolatency[2:0]
 TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.vsew_i[2:0]
@@ -387,23 +411,5 @@ TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbo
 (145)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
 @1401200
 -group_end
-@22
-TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.lane_wb_data[63:0]
-TOP.top.core.multi_lane_instance(1).VECTOR_LANE_inst.lane_wb_data[63:0]
-TOP.top.core.multi_lane_instance(2).VECTOR_LANE_inst.lane_wb_data[63:0]
-TOP.top.core.multi_lane_instance(3).VECTOR_LANE_inst.lane_wb_data[63:0]
-TOP.top.core.multi_lane_instance(4).VECTOR_LANE_inst.lane_wb_data[63:0]
-TOP.top.core.multi_lane_instance(5).VECTOR_LANE_inst.lane_wb_data[63:0]
-TOP.top.core.multi_lane_instance(6).VECTOR_LANE_inst.lane_wb_data[63:0]
-TOP.top.core.multi_lane_instance(7).VECTOR_LANE_inst.lane_wb_data[63:0]
-@28
-TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.wb_valid
-TOP.top.core.multi_lane_instance(1).VECTOR_LANE_inst.wb_valid
-TOP.top.core.multi_lane_instance(2).VECTOR_LANE_inst.wb_valid
-TOP.top.core.multi_lane_instance(3).VECTOR_LANE_inst.wb_valid
-TOP.top.core.multi_lane_instance(4).VECTOR_LANE_inst.wb_valid
-TOP.top.core.multi_lane_instance(5).VECTOR_LANE_inst.wb_valid
-TOP.top.core.multi_lane_instance(6).VECTOR_LANE_inst.wb_valid
-TOP.top.core.multi_lane_instance(7).VECTOR_LANE_inst.wb_valid
 [pattern_trace] 1
 [pattern_trace] 0
