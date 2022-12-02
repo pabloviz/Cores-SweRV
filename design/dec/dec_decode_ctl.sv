@@ -80,6 +80,7 @@ module dec_decode_ctl
 
    input logic exu_div_finish,                        // div finish this cycle
    input logic exu_div_stall,                         // div executing: stall decode
+   input logic exu_vpu_stall,                         // JosePablo
    input logic [31:0] exu_div_result,                 // div result
 
    input logic dec_tlu_i0_kill_writeb_wb,    // I0 is flushed, don't writeback any results to arch state
@@ -343,6 +344,7 @@ module dec_decode_ctl
    logic               div_decode_d;
    logic [31:1]        div_pc;
    logic               div_stall, div_stall_ff;
+   logic	       vpu_stall, vpu_stall_ff; //JosePablo
    logic [3:0]         div_trigger;
 
    logic               i0_legal;
@@ -1429,7 +1431,7 @@ end : cam_array
 
     rvdffs #(1) postsync_stallff (.*, .clk(free_clk), .en(~freeze), .din(ps_stall_in), .dout(ps_stall));
 
-   assign postsync_stall = (ps_stall | div_stall);
+   assign postsync_stall = (ps_stall | div_stall | vpu_stall); //JosePablo
 
 
 
@@ -2231,6 +2233,12 @@ end : cam_array
    assign dec_i1_wdata_wb[31:0] = i1_result_wb[31:0];
 
 // divide stuff
+
+
+   //JosePablo
+   assign vpu_stall = exu_vpu_stall | vpu_stall_ff; 
+   rvdff  #(1) vpustallff (.*, .clk(active_clk), .din(exu_vpu_stall), .dout(vpu_stall_ff));
+////////////
 
 
    assign div_stall = exu_div_stall | div_stall_ff;   // hold for 1 extra cycle so wb can happen before next inst

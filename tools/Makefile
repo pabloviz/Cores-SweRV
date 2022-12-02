@@ -158,6 +158,11 @@ riviera: program.hex riviera-build
 
 ##################### Test Build #####################################
 
+ifeq ($(CUSTOM_HEX),1)
+program.hex: ${BUILD_DIR}/defines.h
+	@echo " custom hex" 
+	cp ${HEX_DIR}/$(TEST).hex program.hex
+else
 
 ifeq ($(shell which $(GCC_PREFIX)-gcc 2> /dev/null),)
 program.hex: ${BUILD_DIR}/defines.h
@@ -182,6 +187,7 @@ program.hex: $(OFILES) $(LINK)
 
 %.o : %.c ${BUILD_DIR}/defines.h
 	$(GCC_PREFIX)-gcc -I${BUILD_DIR} ${TEST_CFLAGS} ${ABI} -nostdlib -c $< -o $@
+endif
 endif
 endif
 

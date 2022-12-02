@@ -149,6 +149,7 @@ module exu
    output logic [31:0]  exu_div_result,                                // Divide result
    output logic exu_div_finish,                                        // Divide is finished
    output logic exu_div_stall,                                         // Divide is running
+   output logic exu_vpu_stall,                                         // JosePablo 
    output logic [31:1] exu_npc_e4,                                     // Divide NPC
 
    output logic exu_i0_flush_lower_e4,                                 // to TLU - lower branch flush
@@ -368,6 +369,13 @@ module exu
                           .finish        ( exu_div_finish              ),   // O
                           .out           ( exu_div_result[31:0]        ));  // O
 
+   //JosePablo: Instanciar OVI
+   reg[7:0] counter = 0;
+   always @(posedge clk)
+   begin
+	counter <= counter + 1;
+   end
+   assign exu_vpu_stall = counter > 128 ? 1'b1 : 1'b0;
 
    predict_pkt_t i0_predict_newp_d, i1_predict_newp_d;
 

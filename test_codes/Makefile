@@ -7,6 +7,7 @@ all:axpy
 
 % : %.c
 	$(CC) $< -S -o $@.s 
+	$(CC) $< -o $@.x
 
 clean:
 	rm -f *.s

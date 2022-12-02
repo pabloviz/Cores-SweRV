@@ -726,6 +726,7 @@ module swerv
    logic [31:0] exu_div_result;
    logic exu_div_finish;
    logic exu_div_stall;
+   logic exu_vpu_stall; //JosePablo
 
 
    logic dec_i0_div_d;
