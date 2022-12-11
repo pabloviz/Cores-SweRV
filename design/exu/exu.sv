@@ -395,7 +395,7 @@ module exu
    begin
 	counter <= counter + 1;
    end
-   assign exu_vpu_stall =  //counter > 128 ? 1'b1 : 1'b0;
+  // assign exu_vpu_stall =  //counter > 128 ? 1'b1 : 1'b0;
 
    ovi #() ovi_module 
 (
