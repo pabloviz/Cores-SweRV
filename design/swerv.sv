@@ -983,6 +983,10 @@ module swerv
 
    assign core_rst_l = rst_l & (dbg_core_rst_l | scan_mode);
 
+   //JosePablo: This communicates the decode and the exu modules for vector instructions
+   core_completed_bus core_completed;
+   core_issue_bus core_issue;
+
    // fetch
    ifu ifu (
        .clk_override(dec_tlu_ifu_clk_override),

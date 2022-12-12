@@ -25,12 +25,15 @@ interface core_issue_bus();
 	wire [`OVI_INSTR_WIDTH-1:0] instr /* verilator public */;
 	wire [`OVI_VL_WIDTH-1:0] vl /* verilator public */;
 	wire [`OVI_SEW_WIDTH-1:0] sew /* verilator public */;
+	wire [`OVI_DATA_WIDTH-1:0] opnd /* verilator public */;
 	wire [0:0] valid /* verilator public */;
+	wire [0:0] wb /* verilator public */;
 endinterface
 
 interface core_completed_bus();
 	wire [`OVI_DATA_WIDTH-1:0] data /* verilator public */;
 	wire [0:0] valid /* verilator public */;
+	wire [4:0] dst /* verilator public */;
 endinterface
 
 //=============================================

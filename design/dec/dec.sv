@@ -141,6 +141,8 @@ module dec
 
    input logic exu_div_stall,               // stall decode for div executing
    input logic exu_vpu_stall,               // JosePablo
+   input core_completed_bus core_completed, // JosePablo
+   output core_issue_bus core_issue,	    // JosePablo
    input logic [31:0]  exu_div_result,      // final div result
    input logic exu_div_finish,              // cycle div finishes
 
@@ -535,6 +537,7 @@ module dec
                     .rd0(gpr_i0_rs1_d[31:0]), .rd1(gpr_i0_rs2_d[31:0]),
                     .rd2(gpr_i1_rs1_d[31:0]), .rd3(gpr_i1_rs2_d[31:0])
                     );
+
 
 // Trigger
 

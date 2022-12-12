@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Fri Dec  2 11:58:22 2022
+[*] Sun Dec 11 23:16:32 2022
 [*]
 [dumpfile] "/home/pvizcaino/master/PD/Cores-SweRV/sim.vcd"
-[dumpfile_mtime] "Fri Dec  2 11:55:36 2022"
-[dumpfile_size] 13498276
+[dumpfile_mtime] "Sun Dec 11 23:14:47 2022"
+[dumpfile_size] 9104995
 [savefile] "/home/pvizcaino/master/PD/Cores-SweRV/gtk.gtkw"
-[timestart] 0
+[timestart] 380
 [size] 1920 1023
 [pos] -1 -1
-*-9.781945 1379 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-8.781945 2519 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] TOP.
 [treeopen] TOP.tb_top.
 [treeopen] TOP.tb_top.rvtop.
@@ -48,21 +48,78 @@
 [treeopen] TOP.tb_top.rvtop.swerv.dec.arf.gpr_banks(0).gpr(7).
 [treeopen] TOP.tb_top.rvtop.swerv.dec.arf.gpr_banks(0).gpr(8).
 [treeopen] TOP.tb_top.rvtop.swerv.dec.arf.gpr_banks(0).gpr(9).
+[treeopen] TOP.tb_top.rvtop.swerv.dec.decode.
+[treeopen] TOP.tb_top.rvtop.swerv.exu.
+[treeopen] TOP.tb_top.rvtop.swerv.exu.core.
+[treeopen] TOP.tb_top.rvtop.swerv.exu.core.multi_lane_instance(0).
+[treeopen] TOP.tb_top.rvtop.swerv.exu.core.multi_lane_instance(0).VECTOR_LANE_inst.
+[treeopen] TOP.tb_top.rvtop.swerv.exu.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.
+[treeopen] TOP.tb_top.rvtop.swerv.exu.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.ALU.
+[treeopen] TOP.tb_top.rvtop.swerv.exu.core.multi_lane_instance(1).
+[treeopen] TOP.tb_top.rvtop.swerv.exu.core.multi_lane_instance(2).
+[treeopen] TOP.tb_top.rvtop.swerv.exu.core.multi_lane_instance(3).
+[treeopen] TOP.tb_top.rvtop.swerv.exu.core.multi_lane_instance(4).
+[treeopen] TOP.tb_top.rvtop.swerv.exu.core.multi_lane_instance(5).
+[treeopen] TOP.tb_top.rvtop.swerv.exu.core.multi_lane_instance(6).
+[treeopen] TOP.tb_top.rvtop.swerv.exu.core.multi_lane_instance(7).
+[treeopen] TOP.tb_top.rvtop.swerv.exu.ovi_module.
 [sst_width] 376
 [signals_width] 321
 [sst_expanded] 1
-[sst_vpaned_height] 304
+[sst_vpaned_height] 647
 @200
 -DECODE_CTL
+@24
+TOP.tb_top.rvtop.swerv.dec_i0_pc_d[31:1]
+TOP.tb_top.rvtop.swerv.dec_i1_pc_d[31:1]
+@200
+-
 @28
+TOP.tb_top.rvtop.swerv.dec.decode.exu_vpu_stall
 TOP.tb_top.rvtop.swerv.dec.decode.vpu_stall
+TOP.tb_top.rvtop.swerv.dec.decode.clk
+@200
+-
+@22
+TOP.tb_top.rvtop.swerv.dec.decode.core_completed.data[63:0]
+TOP.tb_top.rvtop.swerv.dec.decode.exu_vpu_result[31:0]
+@28
+TOP.tb_top.rvtop.swerv.dec.decode.vpu_wen_wb
+TOP.tb_top.rvtop.swerv.dec.decode.i0_wb_data_en
+@22
+TOP.tb_top.rvtop.swerv.dec.decode.exu_vpu_result[31:0]
+TOP.tb_top.rvtop.swerv.dec.decode.dec_i0_waddr_wb[4:0]
+TOP.tb_top.rvtop.swerv.dec.decode.i0_result_wb[31:0]
+@28
+TOP.tb_top.rvtop.swerv.dec.decode.exu_vpu_finish
+TOP.tb_top.rvtop.swerv.dec.decode.i0_valid_d
 TOP.tb_top.rvtop.swerv.dec.decode.dec_i0_decode_d
 TOP.tb_top.rvtop.swerv.dec.decode.dec_i1_decode_d
+TOP.tb_top.rvtop.swerv.dec.decode.i0_block_d
+TOP.tb_top.rvtop.swerv.dec.decode.i1_block_d
 @22
 TOP.tb_top.rvtop.swerv.dec.decode.dec_i0_instr_d[31:0]
 TOP.tb_top.rvtop.swerv.dec.decode.dec_i1_instr_d[31:0]
-@24
+TOP.tb_top.rvtop.swerv.dec.decode.i0_rd_d[4:0]
+TOP.tb_top.rvtop.swerv.dec.decode.i1_rd_d[4:0]
+@28
+TOP.tb_top.rvtop.swerv.dec.decode.debug_i0_is_vector
+TOP.tb_top.rvtop.swerv.dec.decode.debug_i0_legal
+TOP.tb_top.rvtop.swerv.dec.decode.debug_i0_v_load
+TOP.tb_top.rvtop.swerv.dec.decode.debug_i0_v_store
+TOP.tb_top.rvtop.swerv.dec.decode.debug_i0_vv_arith
+TOP.tb_top.rvtop.swerv.dec.decode.debug_i0_vx_arith
+TOP.tb_top.rvtop.swerv.dec.decode.debug_i0_xv_arith
+TOP.tb_top.rvtop.swerv.dec.decode.debug_i1_legal
+@22
+TOP.tb_top.rvtop.swerv.dec.dec_i0_rs1_d[4:0]
+@28
+TOP.tb_top.rvtop.swerv.dec.decode.dec_i0_rs1_en_d
+@200
+-REGS
+@25
 TOP.tb_top.rvtop.swerv.dec.arf.gpr_banks(0).gpr(1).gprff.dout[31:0]
+@24
 TOP.tb_top.rvtop.swerv.dec.arf.gpr_banks(0).gpr(2).gprff.dout[31:0]
 TOP.tb_top.rvtop.swerv.dec.arf.gpr_banks(0).gpr(3).gprff.dout[31:0]
 @22
@@ -97,7 +154,58 @@ TOP.tb_top.rvtop.swerv.dec.arf.gpr_banks(0).gpr(31).gprff.dout[31:0]
 @200
 -EXE
 @28
+TOP.tb_top.rvtop.swerv.exu.dec_tlu_flush_lower_wb
+TOP.tb_top.rvtop.swerv.exu.exu_flush_final
 TOP.tb_top.rvtop.swerv.exu.exu_vpu_stall
+@200
+-
+-OVI
+@28
+TOP.tb_top.rvtop.swerv.exu.ovi_module.wb
+@200
+-VPU ISSUE
+@22
+TOP.tb_top.rvtop.swerv.exu.ovi_module.VPU_ISSUE.instr[31:0]
+TOP.tb_top.rvtop.swerv.exu.ovi_module.VPU_ISSUE.scalar_opnd[63:0]
+@28
+TOP.tb_top.rvtop.swerv.exu.ovi_module.VPU_ISSUE.valid[0]
+TOP.tb_top.rvtop.swerv.exu.ovi_module.VPU_DISPATCH.next_senior[0]
+@200
+-VPU COMPLETE
+@24
+TOP.tb_top.rvtop.swerv.exu.ovi_module.VPU_COMPLETED.dest_reg[63:0]
+@28
+TOP.tb_top.rvtop.swerv.exu.ovi_module.VPU_COMPLETED.illegal[0]
+TOP.tb_top.rvtop.swerv.exu.ovi_module.VPU_COMPLETED.valid[0]
+@200
+-VPU WB
+@28
+TOP.tb_top.rvtop.swerv.exu.core.arithmetic_queue_inst.funct_3[2:0]
+TOP.tb_top.rvtop.swerv.exu.core.arithmetic_queue_inst.src1_is_scalar
+@22
+TOP.tb_top.rvtop.swerv.exu.core.multi_lane_instance(0).VECTOR_LANE_inst.lane_wb_data[63:0]
+TOP.tb_top.rvtop.swerv.exu.core.multi_lane_instance(1).VECTOR_LANE_inst.lane_wb_data[63:0]
+TOP.tb_top.rvtop.swerv.exu.core.multi_lane_instance(2).VECTOR_LANE_inst.lane_wb_data[63:0]
+TOP.tb_top.rvtop.swerv.exu.core.multi_lane_instance(3).VECTOR_LANE_inst.lane_wb_data[63:0]
+TOP.tb_top.rvtop.swerv.exu.core.multi_lane_instance(4).VECTOR_LANE_inst.lane_wb_data[63:0]
+TOP.tb_top.rvtop.swerv.exu.core.multi_lane_instance(5).VECTOR_LANE_inst.lane_wb_data[63:0]
+TOP.tb_top.rvtop.swerv.exu.core.multi_lane_instance(6).VECTOR_LANE_inst.lane_wb_data[63:0]
+TOP.tb_top.rvtop.swerv.exu.core.multi_lane_instance(7).VECTOR_LANE_inst.lane_wb_data[63:0]
+@28
+TOP.tb_top.rvtop.swerv.exu.core.multi_lane_instance(0).VECTOR_LANE_inst.wb_valid
+TOP.tb_top.rvtop.swerv.exu.core.multi_lane_instance(1).VECTOR_LANE_inst.wb_valid
+TOP.tb_top.rvtop.swerv.exu.core.multi_lane_instance(2).VECTOR_LANE_inst.wb_valid
+TOP.tb_top.rvtop.swerv.exu.core.multi_lane_instance(3).VECTOR_LANE_inst.wb_valid
+TOP.tb_top.rvtop.swerv.exu.core.multi_lane_instance(4).VECTOR_LANE_inst.wb_valid
+TOP.tb_top.rvtop.swerv.exu.core.multi_lane_instance(5).VECTOR_LANE_inst.wb_valid
+TOP.tb_top.rvtop.swerv.exu.core.multi_lane_instance(6).VECTOR_LANE_inst.wb_valid
+TOP.tb_top.rvtop.swerv.exu.core.multi_lane_instance(7).VECTOR_LANE_inst.wb_valid
+@200
+-LANE 0 ALU
+@22
+TOP.tb_top.rvtop.swerv.exu.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.ALU.alu_top_inst.src1_data[63:0]
+TOP.tb_top.rvtop.swerv.exu.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.ALU.alu_top_inst.src2_data[63:0]
+TOP.tb_top.rvtop.swerv.exu.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.ALU.alu_top_inst.result_data_o[63:0]
 @200
 -
 [pattern_trace] 1

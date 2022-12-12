@@ -73,7 +73,12 @@ VPATH = $(TEST_DIR) $(BUILD_DIR) $(TBDIR)
 TBFILES = $(TBDIR)/tb_top.sv $(TBDIR)/ahb_sif.sv
 
 defines = $(BUILD_DIR)/common_defines.vh ${RV_ROOT}/design/include/swerv_types.sv
-includes = -I${RV_ROOT}/design/include -I${RV_ROOT}/design/lib  -I${BUILD_DIR}
+# JosePablo
+includes = -I${RV_ROOT}/design/include -I${RV_ROOT}/design/lib  -I${BUILD_DIR} \
+-I${RV_ROOT}/ovi/src/ \
+-I${RV_ROOT}/ovi/bsc-vector-accelerator/src/include \
+-I${RV_ROOT}/ovi/bsc-vector-accelerator/src/modules/vector_lane/functional_unit/fpu-encrypted/src/include 
+
 
 # CFLAGS for verilator generated Makefiles. Without -std=c++11 it complains for `auto` variables
 CFLAGS += "-std=c++11"
@@ -95,9 +100,44 @@ ${BUILD_DIR}/defines.h :
 
 ##################### Verilog Builds #####################################
 
+# JosePablo
+EXTRA_SOURCES= \
+${RV_ROOT}/ovi/src/interfaces.sv \
+${RV_ROOT}/ovi/src/ovi.sv \
+${RV_ROOT}/ovi/src/definitions.sv \
+${RV_ROOT}/ovi/bsc-vector-accelerator/src/package/fpuv_pkg.sv \
+${RV_ROOT}/ovi/bsc-vector-accelerator/src/package/target_pkg.sv \
+${RV_ROOT}/ovi/bsc-vector-accelerator/src/package/EPI_pkg.sv \
+${RV_ROOT}/ovi/bsc-vector-accelerator/src/package/fpuv_div_sqrt_pkg.sv \
+${RV_ROOT}/ovi/bsc-vector-accelerator/src/package/fpuv_wrapper_pkg.sv \
+${RV_ROOT}/ovi/bsc-vector-accelerator/src/modules/top/rtl/vpu_core.sv \
+${RV_ROOT}/ovi/bsc-vector-accelerator/src/modules/commit_unit/rtl/* \
+${RV_ROOT}/ovi/bsc-vector-accelerator/src/modules/common_lib/rtl/* \
+${RV_ROOT}/ovi/bsc-vector-accelerator/src/modules/front_end/rtl/* \
+${RV_ROOT}/ovi/bsc-vector-accelerator/src/modules/issue/rtl/* \
+${RV_ROOT}/ovi/bsc-vector-accelerator/src/modules/memory_units/rtl/* \
+${RV_ROOT}/ovi/bsc-vector-accelerator/src/modules/pmu/rtl/* \
+${RV_ROOT}/ovi/bsc-vector-accelerator/src/modules/reorder_buffer/rtl/* \
+${RV_ROOT}/ovi/bsc-vector-accelerator/src/modules/ring/rtl/* \
+${RV_ROOT}/ovi/bsc-vector-accelerator/src/modules/sram_wrappers/*.sv \
+${RV_ROOT}/ovi/bsc-vector-accelerator/src/modules/sram_wrappers/rtl/* \
+${RV_ROOT}/ovi/bsc-vector-accelerator/src/modules/vector_control_unit/rtl/* \
+${RV_ROOT}/ovi/bsc-vector-accelerator/src/modules/vector_lane/rtl/* \
+${RV_ROOT}/ovi/bsc-vector-accelerator/src/modules/vector_lane/buffers/rtl/* \
+${RV_ROOT}/ovi/bsc-vector-accelerator/src/modules/vector_lane/element_tracker/rtl/* \
+${RV_ROOT}/ovi/bsc-vector-accelerator/src/modules/vector_lane/functional_unit/alu/rtl/* \
+${RV_ROOT}/ovi/bsc-vector-accelerator/src/modules/vector_lane/functional_unit/rtl/* \
+${RV_ROOT}/ovi/bsc-vector-accelerator/src/modules/vector_lane/mask_register_file/rtl/* \
+${RV_ROOT}/ovi/bsc-vector-accelerator/src/modules/vector_lane/ready_bits/rtl/* \
+${RV_ROOT}/ovi/bsc-vector-accelerator/src/modules/vector_lane/vector_register_file/rtl/* 
+
+
+# JosePablo
 verilator-build: ${TBFILES} ${BUILD_DIR}/defines.h test_tb_top.cpp
 	echo '`undef ASSERT_ON' >> ${BUILD_DIR}/common_defines.vh
 	$(VERILATOR) --cc -CFLAGS ${CFLAGS} $(defines) $(includes) \
+		-unroll-count 70000 --unroll-stmts 70000 -Wno-fatal \
+		$(EXTRA_SOURCES) \
                 -Wno-UNOPTFLAT \
                 -I${RV_ROOT}/testbench \
 		-f ${RV_ROOT}/testbench/flist \

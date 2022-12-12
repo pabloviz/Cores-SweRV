@@ -80,8 +80,10 @@ module dec_decode_ctl
 
    input logic exu_div_finish,                        // div finish this cycle
    input logic exu_div_stall,                         // div executing: stall decode
-   input logic exu_vpu_stall,                         // JosePablo
    input logic [31:0] exu_div_result,                 // div result
+   output core_issue_bus core_issue,	    // JosePablo
+   output core_completed_bus core_completed,	    // JosePablo
+   input logic exu_vpu_stall,                         // JosePablo
 
    input logic dec_tlu_i0_kill_writeb_wb,    // I0 is flushed, don't writeback any results to arch state
    input logic dec_tlu_i1_kill_writeb_wb,    // I1 is flushed, don't writeback any results to arch state
@@ -559,6 +561,7 @@ module dec_decode_ctl
    logic       e4d_i0load;
 
    logic [4:0] div_waddr_wb;
+   logic [4:0] vpu_waddr_wb; //JosePablo
    logic [12:1] last_br_immed_e1, last_br_immed_e2;
    logic [31:0]        i0_inst_d, i1_inst_d;
    logic [31:0]        i0_inst_e1, i1_inst_e1;
@@ -993,6 +996,36 @@ end : cam_array
 
    dec_dec_ctl i1_dec (.inst(i1[31:0]),.out(i1_dp_raw));
 
+//JosePablo
+assign core_issue.instr = i0[31:0]; 
+assign core_issue.valid = i0_dp_raw.is_vector & dec_i0_decode_d; 
+assign core_issue.wb = i0_dp_raw.rd & i0[31:26]!=0;
+reg [31:0] exu_vpu_result;
+wire exu_vpu_finish;
+//rvdff  #(1) vpuresultff (.*, .clk(clk), .din(core_completed.data[31:0]), .dout(exu_vpu_result[31:0]));
+always @(posedge clk)
+begin
+	exu_vpu_result <= core_completed.data[31:0];
+end
+assign exu_vpu_finish = core_completed.valid;
+assign vpu_waddr_wb = core_completed.dst;
+
+//JosePablo Debug
+  logic debug_i0_vv_arith = i0_dp_raw.vv_arith;
+  logic debug_i0_xv_arith = i0_dp_raw.xv_arith;
+  logic debug_i0_vx_arith = i0_dp_raw.vx_arith;
+  logic debug_i0_v_load = i0_dp_raw.v_load;
+  logic debug_i0_v_store = i0_dp_raw.v_store;
+  logic debug_i0_is_vector = i0_dp_raw.is_vector;
+  logic debug_i0_legal = i0_dp_raw.legal;
+  logic debug_i1_vv_arith = i1_dp_raw.vv_arith;
+  logic debug_i1_xv_arith = i1_dp_raw.xv_arith;
+  logic debug_i1_vx_arith = i1_dp_raw.vx_arith;
+  logic debug_i1_v_load = i1_dp_raw.v_load;
+  logic debug_i1_v_store = i1_dp_raw.v_store;
+  logic debug_i1_is_vector = i1_dp_raw.is_vector;
+  logic debug_i1_legal = i1_dp_raw.legal;
+
    rvdff #(1) lsu_idle_ff (.*, .clk(active_clk), .din(lsu_halt_idle_any), .dout(lsu_idle));
 
 
@@ -1342,7 +1375,10 @@ end : cam_array
                        i0_secondary_stall_d |  // for performance, dont make i0 secondary if i1 not alu and depends on i0
                        i0_secondary_block_d;
 
+//JosePablo: is_vector
    assign i1_block_d = leak1_i1_stall |
+			i0_dp.is_vector |
+			i1_dp.is_vector |
                       (i0_jal) |            // no i1 after a jal, will flush
               (((|dec_i0_trigger_match_d[3:0]) | ((i0_dp.condbr | i0_dp.jal) & i0_secondary_d)) & i1_dp.load ) | // if branch or branch error then don't allow i1 load
                        i0_presync | i0_postsync |
@@ -1426,7 +1462,7 @@ end : cam_array
    // jal's will flush, so postsync
    assign ps_stall_in =  (dec_i0_decode_d & (i0_jal | (i0_postsync) | ~i0_legal))  |
                          (dec_i1_decode_d &  i1_jal ) |
-                         ((ps_stall & prior_inflight_e1e4) & ~div_wen_wb);
+                         ((ps_stall & prior_inflight_e1e4) & ~div_wen_wb & ~vpu_wen_wb); //JosePablo
 
 
     rvdffs #(1) postsync_stallff (.*, .clk(free_clk), .en(~freeze), .din(ps_stall_in), .dout(ps_stall));
@@ -2191,22 +2227,23 @@ end : cam_array
 
    rvdffe #( $bits(dest_pkt_t) ) e4ff (.*, .en(i0_e4_ctl_en), .din(e3d_in), .dout(e4d));
 
+   //JosePablo
    always_comb begin
 
-      if (exu_div_finish)    // wipe data for exu_div_finish - bug where csr_wen was set for fast divide
+      if (exu_div_finish | exu_vpu_finish)    // wipe data for exu_div_finish - bug where csr_wen was set for fast divide
         e4d_in = '0;
       else
         e4d_in = e4d;
 
 
-      e4d_in.i0rd[4:0] = (exu_div_finish) ? div_waddr_wb[4:0] : e4d.i0rd[4:0];
+      e4d_in.i0rd[4:0] = (exu_div_finish) ? div_waddr_wb[4:0] : (exu_vpu_finish) ? vpu_waddr_wb[4:0] : e4d.i0rd[4:0];
 
-      e4d_in.i0v = (e4d.i0v         & ~e4d.i0div & ~flush_lower_wb) | (exu_div_finish & div_waddr_wb[4:0]!=5'b0);
-      e4d_in.i0valid = (e4d.i0valid              & ~flush_lower_wb) | exu_div_finish;
+      e4d_in.i0v = (e4d.i0v         & ~e4d.i0div & ~flush_lower_wb) | (exu_div_finish & div_waddr_wb[4:0]!=5'b0) | (exu_vpu_finish & vpu_waddr_wb[4:0]!=5'b0);
+      e4d_in.i0valid = (e4d.i0valid              & ~flush_lower_wb) | exu_div_finish | exu_vpu_finish;
       // qual the following with div finish; necessary for divides with early exit
-      e4d_in.i0secondary = e4d.i0secondary & ~flush_lower_wb & ~exu_div_finish;
-      e4d_in.i0load = e4d.i0load & ~flush_lower_wb & ~exu_div_finish;
-      e4d_in.i0store = e4d.i0store & ~flush_lower_wb & ~exu_div_finish;
+      e4d_in.i0secondary = e4d.i0secondary & ~flush_lower_wb & ~exu_div_finish & ~exu_vpu_finish;
+      e4d_in.i0load = e4d.i0load & ~flush_lower_wb & ~exu_div_finish & ~exu_vpu_finish;
+      e4d_in.i0store = e4d.i0store & ~flush_lower_wb & ~exu_div_finish & ~exu_vpu_finish;
 
       e4d_in.i1v = e4d.i1v         & ~flush_lower_wb;
       e4d_in.i1valid = e4d.i1valid & ~flush_lower_wb;
@@ -2214,8 +2251,8 @@ end : cam_array
 
    end
 
-
-   rvdffe #( $bits(dest_pkt_t) ) wbff (.*, .en(i0_wb_ctl_en | exu_div_finish | div_wen_wb), .din(e4d_in), .dout(wbd));
+  //JosePablo
+   rvdffe #( $bits(dest_pkt_t) ) wbff (.*, .en(i0_wb_ctl_en | exu_div_finish | div_wen_wb | exu_vpu_finish | vpu_wen_wb ), .din(e4d_in), .dout(wbd));
 
    assign dec_i0_waddr_wb[4:0] = wbd.i0rd[4:0];
 
@@ -2256,6 +2293,7 @@ end : cam_array
 
    // active_clk -> used for clockgating for wb stage ctl logic
    rvdff  #(1) divwbff (.*, .clk(active_clk), .din(exu_div_finish), .dout(div_wen_wb));
+   rvdff  #(1) vpuwbff (.*, .clk(active_clk), .din(exu_vpu_finish), .dout(vpu_wen_wb)); //JosePablo
 
 
    assign i0_result_e1[31:0] = exu_i0_result_e1[31:0];
@@ -2288,7 +2326,8 @@ end : cam_array
    rvdffe #(32) i0wbresultff (.*, .en(i0_wb_data_en), .din(i0_result_e4_final[31:0]), .dout(i0_result_wb_raw[31:0]));
    rvdffe #(32) i1wbresultff (.*, .en(i1_wb_data_en), .din(i1_result_e4_final[31:0]), .dout(i1_result_wb_raw[31:0]));
 
-   assign i0_result_wb[31:0] = (div_wen_wb) ? exu_div_result[31:0] : i0_result_wb_raw[31:0];
+   //JosePablo
+   assign i0_result_wb[31:0] = (div_wen_wb) ? exu_div_result[31:0] : (vpu_wen_wb) ? exu_vpu_result[31:0] : i0_result_wb_raw[31:0];
 
    assign i1_result_wb[31:0] = i1_result_wb_raw[31:0];
 
@@ -2512,36 +2551,37 @@ module dec_dec_ctl
 
    assign i[31:0] = inst[31:0];
 
-
-assign out.alu = (i[2]) | (i[6]) | (!i[25]&i[4]) | (!i[5]&i[4]);
+assign out.alu = (!i[25]&i[4]&!i[2]) | (i[5]&i[4]&i[2]) | (!i[6]&!i[5]&i[4]) | (
+    i[6]&i[5]) | (i[3]);
 
 assign out.rs1 = (!i[14]&!i[13]&!i[2]) | (!i[13]&i[11]&!i[2]) | (i[19]&i[13]&!i[2]) | (
-    !i[13]&i[10]&!i[2]) | (i[18]&i[13]&!i[2]) | (!i[13]&i[9]&!i[2]) | (
-    i[17]&i[13]&!i[2]) | (!i[13]&i[8]&!i[2]) | (i[16]&i[13]&!i[2]) | (
-    !i[13]&i[7]&!i[2]) | (i[15]&i[13]&!i[2]) | (!i[4]&!i[3]) | (!i[6]
-    &!i[2]);
+    !i[13]&i[10]&!i[2]) | (i[14]&i[6]&!i[5]) | (i[18]&i[13]&!i[2]) | (
+    !i[13]&i[9]&!i[2]) | (i[17]&i[13]&!i[2]) | (!i[13]&i[8]&!i[2]) | (
+    i[16]&i[13]&!i[2]) | (!i[13]&i[7]&!i[2]) | (i[15]&i[13]&!i[2]) | (
+    i[6]&!i[4]&!i[3]) | (!i[6]&!i[2]);
 
 assign out.rs2 = (i[5]&!i[4]&!i[2]) | (!i[6]&i[5]&!i[2]);
 
-assign out.imm12 = (!i[4]&!i[3]&i[2]) | (i[13]&!i[5]&i[4]&!i[2]) | (!i[13]&!i[12]
-    &i[6]&i[4]) | (!i[12]&!i[5]&i[4]&!i[2]);
+assign out.imm12 = (!i[13]&!i[12]&i[6]&i[4]&!i[2]) | (i[13]&!i[5]&i[4]&!i[2]) | (
+    i[6]&!i[4]&!i[3]&i[2]) | (!i[12]&!i[5]&i[4]&!i[2]);
 
-assign out.rd = (!i[5]&!i[2]) | (i[5]&i[2]) | (i[4]);
+assign out.rd = (i[13]&!i[12]&i[4]) | (i[4]&!i[2]) | (i[6]&!i[4]&i[2]) | (!i[5]&!i[2]) | (
+    !i[6]&i[4]);
 
-assign out.shimm5 = (!i[13]&i[12]&!i[5]&i[4]&!i[2]);
+assign out.shimm5 = (i[12]&i[6]&!i[5]) | (!i[13]&i[12]&!i[5]&i[4]&!i[2]);
 
-assign out.imm20 = (i[5]&i[3]) | (i[4]&i[2]);
+assign out.imm20 = (i[5]&i[3]) | (!i[6]&i[4]&i[2]);
 
-assign out.pc = (!i[5]&!i[3]&i[2]) | (i[5]&i[3]);
+assign out.pc = (i[5]&i[3]) | (!i[6]&!i[5]&i[4]&i[2]);
 
 assign out.load = (!i[5]&!i[4]&!i[2]);
 
-assign out.store = (!i[6]&i[5]&!i[4]);
+assign out.store = (!i[6]&i[5]&!i[4]&!i[2]);
 
 assign out.lsu = (!i[6]&!i[4]&!i[2]);
 
-assign out.add = (!i[14]&!i[13]&!i[12]&!i[5]&i[4]) | (!i[5]&!i[3]&i[2]) | (!i[30]
-    &!i[25]&!i[14]&!i[13]&!i[12]&!i[6]&i[4]&!i[2]);
+assign out.add = (!i[14]&!i[13]&!i[12]&!i[5]&i[4]&!i[2]) | (!i[30]&!i[25]&!i[14]
+    &!i[13]&!i[12]&!i[6]&i[4]&!i[2]) | (!i[6]&!i[5]&i[4]&i[2]);
 
 assign out.sub = (i[30]&!i[12]&!i[6]&i[5]&i[4]&!i[2]) | (!i[25]&!i[14]&i[13]&!i[6]
     &i[4]&!i[2]) | (!i[14]&i[13]&!i[5]&i[4]&!i[2]) | (i[6]&!i[4]&!i[2]);
@@ -2549,10 +2589,11 @@ assign out.sub = (i[30]&!i[12]&!i[6]&i[5]&i[4]&!i[2]) | (!i[25]&!i[14]&i[13]&!i[
 assign out.land = (i[14]&i[13]&i[12]&!i[5]&!i[2]) | (!i[25]&i[14]&i[13]&i[12]&!i[6]
     &!i[2]);
 
-assign out.lor = (!i[6]&i[3]) | (!i[25]&i[14]&i[13]&!i[12]&i[4]&!i[2]) | (i[5]&i[4]
-    &i[2]) | (!i[12]&i[6]&i[4]) | (i[13]&i[6]&i[4]) | (i[14]&i[13]&!i[12]
-    &!i[5]&!i[2]) | (i[7]&i[6]&i[4]) | (i[8]&i[6]&i[4]) | (i[9]&i[6]&i[4]) | (
-    i[10]&i[6]&i[4]) | (i[11]&i[6]&i[4]);
+assign out.lor = (!i[5]&i[3]) | (!i[25]&i[14]&i[13]&!i[12]&i[4]&!i[2]) | (i[13]&i[6]
+    &i[4]&!i[2]) | (!i[12]&i[6]&i[4]&!i[2]) | (i[11]&i[6]&i[4]&!i[2]) | (
+    i[10]&i[6]&i[4]&!i[2]) | (i[9]&i[6]&i[4]&!i[2]) | (i[8]&i[6]&i[4]
+    &!i[2]) | (i[7]&i[6]&i[4]&!i[2]) | (i[14]&i[13]&!i[12]&!i[5]&!i[2]) | (
+    i[5]&i[4]&i[2]);
 
 assign out.lxor = (!i[25]&i[14]&!i[13]&!i[12]&i[4]&!i[2]) | (i[14]&!i[13]&!i[12]
     &!i[5]&i[4]&!i[2]);
@@ -2567,7 +2608,7 @@ assign out.slt = (!i[25]&!i[14]&i[13]&!i[6]&i[4]&!i[2]) | (!i[14]&i[13]&!i[5]&i[
     &!i[2]);
 
 assign out.unsign = (!i[14]&i[13]&i[12]&!i[5]&!i[2]) | (i[13]&i[6]&!i[4]&!i[2]) | (
-    i[14]&!i[5]&!i[4]) | (!i[25]&!i[14]&i[13]&i[12]&!i[6]&!i[2]) | (
+    i[14]&!i[5]&!i[4]&!i[2]) | (!i[25]&!i[14]&i[13]&i[12]&!i[6]&!i[2]) | (
     i[25]&i[14]&i[12]&!i[6]&i[5]&!i[2]);
 
 assign out.condbr = (i[6]&!i[4]&!i[2]);
@@ -2576,53 +2617,56 @@ assign out.beq = (!i[14]&!i[12]&i[6]&!i[4]&!i[2]);
 
 assign out.bne = (!i[14]&i[12]&i[6]&!i[4]&!i[2]);
 
-assign out.bge = (i[14]&i[12]&i[5]&!i[4]&!i[2]);
+assign out.bge = (i[14]&i[12]&i[6]&!i[4]&!i[2]);
 
-assign out.blt = (i[14]&!i[12]&i[5]&!i[4]&!i[2]);
+assign out.blt = (i[14]&!i[12]&i[6]&!i[4]&!i[2]);
 
-assign out.jal = (i[6]&i[2]);
+assign out.jal = (i[6]&!i[4]&i[2]);
 
 assign out.by = (!i[13]&!i[12]&!i[6]&!i[4]&!i[2]);
 
 assign out.half = (i[12]&!i[6]&!i[4]&!i[2]);
 
-assign out.word = (i[13]&!i[6]&!i[4]);
+assign out.word = (i[13]&!i[6]&!i[4]&!i[2]);
 
-assign out.csr_read = (i[13]&i[6]&i[4]) | (i[7]&i[6]&i[4]) | (i[8]&i[6]&i[4]) | (
-    i[9]&i[6]&i[4]) | (i[10]&i[6]&i[4]) | (i[11]&i[6]&i[4]);
+assign out.csr_read = (i[13]&i[6]&i[4]&!i[2]) | (i[11]&i[6]&i[4]&!i[2]) | (i[10]
+    &i[6]&i[4]&!i[2]) | (i[9]&i[6]&i[4]&!i[2]) | (i[8]&i[6]&i[4]&!i[2]) | (
+    i[7]&i[6]&i[4]&!i[2]);
 
-assign out.csr_clr = (i[15]&i[13]&i[12]&i[6]&i[4]) | (i[16]&i[13]&i[12]&i[6]&i[4]) | (
-    i[17]&i[13]&i[12]&i[6]&i[4]) | (i[18]&i[13]&i[12]&i[6]&i[4]) | (
-    i[19]&i[13]&i[12]&i[6]&i[4]);
+assign out.csr_clr = (i[19]&i[13]&i[12]&i[6]&i[4]&!i[2]) | (i[18]&i[13]&i[12]&i[6]
+    &i[4]&!i[2]) | (i[17]&i[13]&i[12]&i[6]&i[4]&!i[2]) | (i[16]&i[13]
+    &i[12]&i[6]&i[4]&!i[2]) | (i[15]&i[13]&i[12]&i[6]&i[4]&!i[2]);
 
-assign out.csr_set = (i[15]&!i[12]&i[6]&i[4]) | (i[16]&!i[12]&i[6]&i[4]) | (i[17]
-    &!i[12]&i[6]&i[4]) | (i[18]&!i[12]&i[6]&i[4]) | (i[19]&!i[12]&i[6]
-    &i[4]);
+assign out.csr_set = (i[19]&!i[12]&i[6]&i[4]&!i[2]) | (i[18]&!i[12]&i[6]&i[4]&!i[2]) | (
+    i[17]&!i[12]&i[6]&i[4]&!i[2]) | (i[16]&!i[12]&i[6]&i[4]&!i[2]) | (
+    i[15]&!i[12]&i[6]&i[4]&!i[2]);
 
 assign out.csr_write = (!i[13]&i[12]&i[6]&i[4]);
 
-assign out.csr_imm = (i[14]&!i[13]&i[6]&i[4]) | (i[15]&i[14]&i[6]&i[4]) | (i[16]
-    &i[14]&i[6]&i[4]) | (i[17]&i[14]&i[6]&i[4]) | (i[18]&i[14]&i[6]&i[4]) | (
-    i[19]&i[14]&i[6]&i[4]);
+assign out.csr_imm = (i[19]&i[14]&i[6]&i[4]&!i[2]) | (i[18]&i[14]&i[6]&i[4]&!i[2]) | (
+    i[17]&i[14]&i[6]&i[4]&!i[2]) | (i[14]&!i[13]&i[6]&i[4]&!i[2]) | (
+    i[16]&i[14]&i[6]&i[4]&!i[2]) | (i[15]&i[14]&i[6]&i[4]&!i[2]);
 
-assign out.presync = (!i[5]&i[3]) | (i[25]&i[14]&!i[6]&i[5]&!i[2]) | (!i[13]&i[7]
-    &i[6]&i[4]) | (!i[13]&i[8]&i[6]&i[4]) | (!i[13]&i[9]&i[6]&i[4]) | (
-    !i[13]&i[10]&i[6]&i[4]) | (!i[13]&i[11]&i[6]&i[4]) | (i[15]&i[13]
-    &i[6]&i[4]) | (i[16]&i[13]&i[6]&i[4]) | (i[17]&i[13]&i[6]&i[4]) | (
-    i[18]&i[13]&i[6]&i[4]) | (i[19]&i[13]&i[6]&i[4]);
+assign out.presync = (!i[5]&i[3]) | (!i[13]&i[11]&i[6]&i[4]&!i[2]) | (i[19]&i[13]
+    &i[6]&i[4]&!i[2]) | (!i[13]&i[10]&i[6]&i[4]&!i[2]) | (i[18]&i[13]
+    &i[6]&i[4]&!i[2]) | (!i[13]&i[9]&i[6]&i[4]&!i[2]) | (i[17]&i[13]&i[6]
+    &i[4]&!i[2]) | (!i[13]&i[8]&i[6]&i[4]&!i[2]) | (i[16]&i[13]&i[6]&i[4]
+    &!i[2]) | (!i[13]&i[7]&i[6]&i[4]&!i[2]) | (i[15]&i[13]&i[6]&i[4]&!i[2]) | (
+    i[25]&i[14]&!i[6]&i[5]&!i[2]);
 
-assign out.postsync = (i[12]&!i[5]&i[3]) | (!i[22]&!i[13]&!i[12]&i[6]&i[4]) | (
-    i[25]&i[14]&!i[6]&i[5]&!i[2]) | (!i[13]&i[7]&i[6]&i[4]) | (!i[13]
-    &i[8]&i[6]&i[4]) | (!i[13]&i[9]&i[6]&i[4]) | (!i[13]&i[10]&i[6]&i[4]) | (
-    !i[13]&i[11]&i[6]&i[4]) | (i[15]&i[13]&i[6]&i[4]) | (i[16]&i[13]&i[6]
-    &i[4]) | (i[17]&i[13]&i[6]&i[4]) | (i[18]&i[13]&i[6]&i[4]) | (i[19]
-    &i[13]&i[6]&i[4]);
+assign out.postsync = (i[12]&!i[5]&i[3]) | (!i[22]&!i[13]&!i[12]&i[6]&i[4]&!i[2]) | (
+    !i[13]&i[11]&i[6]&i[4]&!i[2]) | (i[19]&i[13]&i[6]&i[4]&!i[2]) | (
+    !i[13]&i[10]&i[6]&i[4]&!i[2]) | (i[18]&i[13]&i[6]&i[4]&!i[2]) | (
+    !i[13]&i[9]&i[6]&i[4]&!i[2]) | (i[17]&i[13]&i[6]&i[4]&!i[2]) | (
+    !i[13]&i[8]&i[6]&i[4]&!i[2]) | (i[16]&i[13]&i[6]&i[4]&!i[2]) | (
+    !i[13]&i[7]&i[6]&i[4]&!i[2]) | (i[15]&i[13]&i[6]&i[4]&!i[2]) | (
+    i[25]&i[14]&!i[6]&i[5]&!i[2]);
 
-assign out.ebreak = (!i[22]&i[20]&!i[13]&!i[12]&i[6]&i[4]);
+assign out.ebreak = (!i[22]&i[20]&!i[13]&!i[12]&i[6]&i[4]&!i[2]);
 
-assign out.ecall = (!i[21]&!i[20]&!i[13]&!i[12]&i[6]&i[4]);
+assign out.ecall = (!i[21]&!i[20]&!i[13]&!i[12]&i[6]&i[4]&!i[2]);
 
-assign out.mret = (i[29]&!i[13]&!i[12]&i[6]&i[4]);
+assign out.mret = (i[29]&!i[13]&!i[12]&i[5]&i[4]&!i[2]);
 
 assign out.mul = (i[25]&!i[14]&!i[6]&i[5]&i[4]&!i[2]);
 
@@ -2641,9 +2685,22 @@ assign out.fence = (!i[5]&i[3]);
 
 assign out.fence_i = (i[12]&!i[5]&i[3]);
 
-assign out.pm_alu = (i[28]&i[22]&!i[13]&!i[12]&i[4]) | (i[4]&i[2]) | (!i[25]&!i[6]
-    &i[4]) | (!i[5]&i[4]);
+assign out.pm_alu = (i[28]&i[22]&!i[13]&!i[12]&i[4]&!i[2]) | (i[5]&i[4]&i[2]) | (
+    !i[6]&!i[5]&i[4]) | (!i[25]&!i[6]&i[4]);
 
+assign out.vv_arith = (!i[14]&!i[13]&i[6]&!i[5]);
+
+assign out.xv_arith = (i[13]&!i[12]&i[6]&!i[5]);
+
+assign out.vi_arith = (i[12]&i[6]&!i[5]);
+
+assign out.vx_arith = (i[14]&i[6]&!i[5]);
+
+assign out.v_load = (!i[5]&!i[4]&!i[3]&i[2]);
+
+assign out.v_store = (!i[6]&i[5]&!i[4]&i[2]);
+
+assign out.is_vector = (i[6]&!i[5]) | (!i[6]&!i[4]&!i[3]&i[2]);
 
 assign out.legal = (!i[31]&!i[30]&i[29]&i[28]&!i[27]&!i[26]&!i[25]&!i[24]&!i[23]
     &!i[22]&i[21]&!i[20]&!i[19]&!i[18]&!i[17]&!i[16]&!i[15]&!i[14]&!i[11]
@@ -2655,23 +2712,24 @@ assign out.legal = (!i[31]&!i[30]&i[29]&i[28]&!i[27]&!i[26]&!i[25]&!i[24]&!i[23]
     &!i[19]&!i[18]&!i[17]&!i[16]&!i[15]&!i[14]&!i[11]&!i[10]&!i[9]&!i[8]
     &!i[7]&i[5]&i[4]&!i[3]&!i[2]&i[1]&i[0]) | (!i[31]&!i[30]&!i[29]&!i[28]
     &!i[27]&!i[26]&!i[25]&!i[6]&i[4]&!i[3]&i[1]&i[0]) | (!i[31]&!i[29]
-    &!i[28]&!i[27]&!i[26]&!i[25]&!i[14]&!i[13]&!i[12]&!i[6]&!i[3]&!i[2]
-    &i[1]&i[0]) | (!i[31]&!i[29]&!i[28]&!i[27]&!i[26]&!i[25]&i[14]&!i[13]
-    &i[12]&!i[6]&i[4]&!i[3]&i[1]&i[0]) | (!i[31]&!i[30]&!i[29]&!i[28]
-    &!i[27]&!i[26]&!i[6]&i[5]&i[4]&!i[3]&i[1]&i[0]) | (!i[14]&!i[13]
-    &!i[12]&i[6]&i[5]&!i[4]&!i[3]&i[1]&i[0]) | (i[14]&i[6]&i[5]&!i[4]
-    &!i[3]&!i[2]&i[1]&i[0]) | (!i[12]&!i[6]&!i[5]&i[4]&!i[3]&i[1]&i[0]) | (
-    !i[14]&!i[13]&i[5]&!i[4]&!i[3]&!i[2]&i[1]&i[0]) | (i[12]&i[6]&i[5]
-    &i[4]&!i[3]&!i[2]&i[1]&i[0]) | (!i[31]&!i[30]&!i[29]&!i[28]&!i[27]
-    &!i[26]&!i[25]&!i[24]&!i[23]&!i[22]&!i[21]&!i[20]&!i[19]&!i[18]&!i[17]
-    &!i[16]&!i[15]&!i[14]&!i[13]&!i[11]&!i[10]&!i[9]&!i[8]&!i[7]&!i[6]
-    &!i[5]&!i[4]&i[3]&i[2]&i[1]&i[0]) | (!i[31]&!i[30]&!i[29]&!i[28]
-    &!i[19]&!i[18]&!i[17]&!i[16]&!i[15]&!i[14]&!i[13]&!i[12]&!i[11]&!i[10]
-    &!i[9]&!i[8]&!i[7]&!i[6]&!i[5]&!i[4]&i[3]&i[2]&i[1]&i[0]) | (i[13]
-    &i[6]&i[5]&i[4]&!i[3]&!i[2]&i[1]&i[0]) | (!i[13]&!i[6]&!i[5]&!i[4]
-    &!i[3]&!i[2]&i[1]&i[0]) | (i[6]&i[5]&!i[4]&i[3]&i[2]&i[1]&i[0]) | (
+    &!i[28]&!i[27]&!i[26]&!i[25]&i[14]&!i[13]&i[12]&!i[6]&i[4]&!i[3]&i[1]
+    &i[0]) | (!i[31]&!i[30]&!i[29]&!i[28]&!i[27]&!i[26]&!i[6]&i[5]&i[4]
+    &!i[3]&i[1]&i[0]) | (!i[14]&!i[13]&!i[12]&i[5]&!i[4]&!i[3]&i[1]&i[0]) | (
+    !i[12]&!i[6]&!i[5]&i[4]&!i[3]&i[1]&i[0]) | (i[14]&i[6]&i[5]&!i[4]
+    &!i[3]&!i[2]&i[1]&i[0]) | (i[12]&i[6]&i[5]&i[4]&!i[3]&!i[2]&i[1]&i[0]) | (
+    !i[14]&!i[13]&i[5]&!i[4]&!i[3]&!i[2]&i[1]&i[0]) | (!i[31]&!i[30]
+    &!i[29]&!i[28]&!i[27]&!i[26]&!i[25]&!i[24]&!i[23]&!i[22]&!i[21]&!i[20]
+    &!i[19]&!i[18]&!i[17]&!i[16]&!i[15]&!i[14]&!i[13]&!i[11]&!i[10]&!i[9]
+    &!i[8]&!i[7]&!i[6]&!i[5]&!i[4]&i[2]&i[1]&i[0]) | (!i[31]&!i[30]&!i[29]
+    &!i[28]&!i[19]&!i[18]&!i[17]&!i[16]&!i[15]&!i[14]&!i[13]&!i[12]&!i[11]
+    &!i[10]&!i[9]&!i[8]&!i[7]&!i[6]&!i[5]&!i[4]&i[2]&i[1]&i[0]) | (!i[31]
+    &!i[29]&!i[28]&!i[27]&!i[26]&!i[25]&!i[14]&!i[13]&!i[12]&!i[6]&!i[3]
+    &i[1]&i[0]) | (i[13]&i[6]&i[5]&i[4]&!i[3]&!i[2]&i[1]&i[0]) | (!i[13]
+    &!i[12]&!i[5]&i[4]&!i[3]&i[2]&i[1]&i[0]) | (!i[13]&!i[6]&!i[5]&!i[4]
+    &!i[3]&i[1]&i[0]) | (!i[14]&i[13]&!i[5]&i[4]&!i[3]&i[2]&i[1]&i[0]) | (
     i[13]&!i[6]&!i[5]&i[4]&!i[3]&i[1]&i[0]) | (!i[14]&!i[12]&!i[6]&!i[4]
-    &!i[3]&!i[2]&i[1]&i[0]) | (!i[6]&i[4]&!i[3]&i[2]&i[1]&i[0]);
+    &!i[3]&i[1]&i[0]) | (i[6]&i[5]&!i[4]&i[3]&i[2]&i[1]&i[0]) | (!i[6]
+    &!i[3]&i[2]&i[1]&i[0]);
 
 
 endmodule

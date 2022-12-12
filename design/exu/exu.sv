@@ -149,7 +149,8 @@ module exu
    output logic [31:0]  exu_div_result,                                // Divide result
    output logic exu_div_finish,                                        // Divide is finished
    output logic exu_div_stall,                                         // Divide is running
-   output logic exu_vpu_stall,                                         // JosePablo 
+
+
    output logic [31:1] exu_npc_e4,                                     // Divide NPC
 
    output logic exu_i0_flush_lower_e4,                                 // to TLU - lower branch flush
@@ -204,12 +205,13 @@ module exu
    output logic exu_pmu_i0_pc4,                                        // to PMU - I0 E4 PC
    output logic exu_pmu_i1_br_misp,                                    // to PMU - I1 E4 branch mispredict
    output logic exu_pmu_i1_br_ataken,                                  // to PMU - I1 E4 taken
-   output logic exu_pmu_i1_pc4                                         // to PMU - I1 E4 PC
+   output logic exu_pmu_i1_pc4,                                         // to PMU - I1 E4 PC
 
    //JosePablo: VPU connections
    //With core
-	input core_issue_bus CORE_ISSUE,
-	output core_completed_bus CORE_COMPLETED
+   	output logic exu_vpu_stall, 
+	input core_issue_bus core_issue,
+	output core_completed_bus core_completed
    );
 
 
@@ -374,10 +376,7 @@ module exu
                           .out           ( exu_div_result[31:0]        ));  // O
 
    //JosePablo: Instanciar OVI
-   //Declarations
-   logic core_completed_bus CORE_COMPLETED; 
-
-   //Vpu signals
+   //Signals that connect the OVI and the VPU
    wire issue_credit;
    vpu_completed_bus vpu_completed;
    vpu_issue_bus vpu_issue;
@@ -389,13 +388,17 @@ module exu
    vpu_memop_bus vpu_memop;
    vpu_load_bus vpu_load;
    wire vpu_mask_idx_credit;
-   
+
+
+  
+/* 
    reg[7:0] counter = 0;
    always @(posedge clk)
    begin
 	counter <= counter + 1;
    end
    assign exu_vpu_stall =  //counter > 128 ? 1'b1 : 1'b0;
+*/
 
    ovi #() ovi_module 
 (
@@ -422,10 +425,24 @@ module exu
 	
 );
 
+//JosePablo: This was missing
+wire [40-1:0] vpu_csr;
+assign vpu_csr = {vpu_issue.vcsr.vill, vpu_issue.vcsr.vsew, vpu_issue.vcsr.vlmul,
+       vpu_issue.vcsr.frm, vpu_issue.vcsr.vxrm, vpu_issue.vcsr.vl, vpu_issue.vcsr.vstart};
+wire [34-1:0] vpu_seqid;
+assign vpu_seqid = {vpu_load.seq_id.sb_id, vpu_load.seq_id.el_count, vpu_load.seq_id.el_off,
+		 vpu_load.seq_id.el_id, vpu_load.seq_id.v_reg};
+
+reg [`OVI_VL_WIDTH-1: 0] vl = 19; //8 elements per vector
+reg [`OVI_SEW_WIDTH-1: 0] sew = 2; //32-bit elements
+assign core_issue.vl = vl;
+assign core_issue.sew = sew;
+assign core_issue.opnd = i0_rs1_d;
+
 vpu_core #() core
 (
         .clk_i(clk),
-	     .rsn_i(rst_l),
+	.rsn_i(rst_l),
         .core_stall_o (vpu_stall),
 
         .issue_credit_o(issue_credit),

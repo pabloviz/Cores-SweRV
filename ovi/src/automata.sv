@@ -23,6 +23,7 @@ reg [3:0] delay = 1;
 assign halt = CORE_HALT | (delay != 0) | read_instruction == -1;
 assign read_instruction = MEM[mem_ptr];
 assign CORE_ISSUE.instr = read_instruction; 
+assign CORE_ISSUE.opnd = 3;
 assign CORE_ISSUE.vl = vl;
 assign CORE_ISSUE.sew = sew;
 assign CORE_ISSUE.valid = (curr_state==READ_AND_ISSUE && !halt) ? 1'b1 : 1'b0;

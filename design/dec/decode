@@ -1,6 +1,13 @@
 
 .definition
 
+vv_arith =[.................000.....1010111]
+xv_arith =[.................010.....1010111]
+vi_arith =[.................011.....1010111]
+vx_arith =[.................100.....1010111]
+v_load =  [.........................0000111]
+v_store = [.........................0100111]
+
 add =     [0000000..........000.....0110011]
 addi =    [.................000.....0010011]
 
@@ -207,9 +214,24 @@ rv32i = {
       fence
       fence_i
       pm_alu
+      vv_arith
+      xv_arith
+      vi_arith
+      vx_arith
+      v_load
+      v_store
+      is_vector
 }
 
 .decode
+
+
+rv32i[vv_arith] = { vv_arith is_vector }
+rv32i[vx_arith] = { vx_arith is_vector rs1 }
+rv32i[xv_arith] = { xv_arith is_vector rd }
+rv32i[vi_arith] = { vi_arith is_vector shimm5 }
+rv32i[v_load] = { v_load is_vector }
+rv32i[v_store] = { v_store is_vector }
 
 rv32i[mul]    = { mul rs1 rs2 rd low }
 rv32i[mulh]   = { mul rs1 rs2 rd rs1_sign rs2_sign }

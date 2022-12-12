@@ -46,13 +46,16 @@ reg [`OVI_MEMDATA_WIDTH-1:0] BUFFER_STORE [32];
 reg [`OVI_MEMDATA_WIDTH-1:0] BUFFER_LOAD [32];
 wire [64-1:0] instrlogbits = CORE_ISSUE.sew==0 ? 3 : CORE_ISSUE.sew==1 ? 4 : CORE_ISSUE.sew==2? 5 : 6;
 
+//Writeback
+reg wb = 0; //This should be for every sb_id
+
 
 //Asigns
 assign CORE_HALT = curr_state!=WAIT_ISSUE || issue_credits==0? 1'b1 : 1'b0;
 
 //Issue bus (construct it from core issue)
 assign VPU_ISSUE.instr = CORE_ISSUE.instr;
-assign VPU_ISSUE.scalar_opnd = 64'b0;
+assign VPU_ISSUE.scalar_opnd = CORE_ISSUE.opnd;
 assign VPU_ISSUE.sb_id = sbid_counter; 
 assign VPU_ISSUE.vcsr.vstart = `OVI_VSTART_WIDTH'b0; 
 assign VPU_ISSUE.vcsr.vl = CORE_ISSUE.vl;
@@ -70,7 +73,8 @@ assign VPU_DISPATCH.next_senior = VPU_ISSUE.valid;
 
 //Completed bus (just pass data)
 assign CORE_COMPLETED.data = VPU_COMPLETED.dest_reg;
-assign CORE_COMPLETED.valid = VPU_COMPLETED.valid; //This may change in the future
+assign CORE_COMPLETED.valid = VPU_COMPLETED.valid & wb; 
+assign CORE_COMPLETED.dst = instr_reg;
 
 //Memop (right now at 0)
 assign VPU_MEMOP.sync_end = (curr_state == RECEIVE_DATA || curr_state == SEND_DATA) && (transmited_packets == n_packets) ? 1'b1 : 1'b0;
@@ -108,7 +112,7 @@ begin
         BUFFER_STORE[i] = 512'b0;
 	for(j=0; j<512; j+=32)
 	begin
-		BUFFER_LOAD[i][j+:32] <= 3;
+		BUFFER_LOAD[i][j+:32] = 3;
 	end
     end
  end
@@ -127,6 +131,7 @@ begin
 				instr_is_load <= CORE_ISSUE.instr[6:0] == 7'b0000111;
 				instr_is_store <= CORE_ISSUE.instr[6:0] == 7'b0100111;
 				instr_reg <= CORE_ISSUE.instr[11:7];
+				wb <= CORE_ISSUE.wb;
 				//Change state
 				curr_state <= WAIT_ANSWER;
 			end
