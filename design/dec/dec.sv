@@ -139,10 +139,12 @@ module dec
 
    input logic [15:0] ifu_illegal_inst,     // 16b opcode for illegal inst
 
-   input logic exu_div_stall,               // stall decode for div executing
    input logic exu_vpu_stall,               // JosePablo
    input core_completed_bus core_completed, // JosePablo
    output core_issue_bus core_issue,	    // JosePablo
+   output logic is_vsetvli,			//JosePablo
+
+   input logic exu_div_stall,               // stall decode for div executing
    input logic [31:0]  exu_div_result,      // final div result
    input logic exu_div_finish,              // cycle div finishes
 

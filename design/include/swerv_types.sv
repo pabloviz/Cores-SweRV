@@ -290,6 +290,7 @@ logic rem;
 logic fence;
 logic fence_i;
 logic pm_alu;
+logic vsetvli;
 logic vv_arith;
 logic xv_arith;
 logic vi_arith;

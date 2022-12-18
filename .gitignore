@@ -1,4 +1,5 @@
 # Exclude/Ignore file for git
+obj_dir/*
 *.log
 RCS
 *~

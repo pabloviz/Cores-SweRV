@@ -270,7 +270,7 @@ module lsu
    logic        lsu_busm_clk;
    logic        lsu_free_c2_clk;
 
-
+   //JosePablo: This generates the address!!
    lsu_lsc_ctl lsu_lsc_ctl(.*);
 
    // block stores in decode  - for either bus or stbuf reasons

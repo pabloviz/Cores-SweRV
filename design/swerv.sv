@@ -607,6 +607,8 @@ module swerv
    logic [31:0] i1_rs1_bypass_data_d;
    logic [31:0] i1_rs2_bypass_data_d;
    logic [31:0] exu_i0_result_e1, exu_i1_result_e1;
+   logic [31:0] exu_i0_result_e1_exu; //JosePablo
+
    logic  [31:1] exu_i0_pc_e1;
    logic  [31:1] exu_i1_pc_e1;  // from the primary alu's
    logic [31:1]  exu_npc_e4;
@@ -663,12 +665,20 @@ module swerv
    logic [31:1] exu_flush_path_final;
 
    logic [31:0] exu_lsu_rs1_d;
+   logic [31:0] exu_lsu_rs1_d_exu; //JosePablo
+   logic [31:0] exu_lsu_rs1_d_vec; //JosePablo
    logic [31:0] exu_lsu_rs2_d;
+   logic [31:0] exu_lsu_rs2_d_exu; //JosePablo
+   logic [31:0] exu_lsu_rs2_d_vec; //JosePablo
 
 
    lsu_pkt_t    lsu_p;
+   lsu_pkt_t    lsu_p_decode; //JosePablo
+   lsu_pkt_t    lsu_p_vec; //JosePablo
 
    logic [11:0] dec_lsu_offset_d;
+   logic [11:0] dec_lsu_offset_d_decode; //JosePablo
+   logic [11:0] dec_lsu_offset_d_vec; //JosePablo
    logic        dec_i0_lsu_d;       // chose which gpr value to use
    logic        dec_i1_lsu_d;
 
@@ -983,9 +993,79 @@ module swerv
 
    assign core_rst_l = rst_l & (dbg_core_rst_l | scan_mode);
 
-   //JosePablo: This communicates the decode and the exu modules for vector instructions
+
+
+
+
+
+   //JosePablo: These communicates the decode and the exu modules for vector instructions
    core_completed_bus core_completed;
    core_issue_bus core_issue;
+   core_in_loadstore_bus core_in_loadstore;
+   core_out_loadstore_bus core_out_loadstore;
+
+
+    //JosePablo: vl and sew control
+    wire is_vsetvli; //defined in dec
+    reg [`OVI_VL_WIDTH-1: 0] vl = 0; 
+    reg [`OVI_SEW_WIDTH-1: 0] sew = 0;
+    assign core_issue.vl = vl;
+    assign core_issue.sew = sew;
+
+    wire [31:0] read_vl = dec_i0_rs1_bypass_en_d ? i0_rs1_bypass_data_d  : dec_i0_rs1_bypass_en_e2 ? i0_rs1_bypass_data_e2 : dec_i0_rs1_bypass_en_e3 ? i0_rs1_bypass_data_e3 : gpr_i0_rs1_d;
+    reg vl_ready = 0;
+    always @(posedge clk)
+    begin
+	vl_ready <= 1'b0;
+    	if (is_vsetvli) begin //this signal comes from decode
+		if (read_vl > 256) begin
+			vl <= 256;
+		end
+		else begin
+			vl <= read_vl;
+		end
+		sew <= dec_i0_immed_d[3:2];
+		vl_ready <= 1'b1;
+    	end
+    end
+
+   assign exu_i0_result_e1 = vl_ready ? vl : exu_i0_result_e1_exu; //JosePablo
+
+
+   //JosePablo: For vector loads and stores 
+   assign lsu_p_vec.valid = core_out_loadstore.load_valid | core_out_loadstore.store_valid;
+   assign lsu_p_vec.load =  core_out_loadstore.load_valid;
+   assign lsu_p_vec.store = core_out_loadstore.store_valid; 
+   assign lsu_p_vec.by =	(core_out_loadstore.sew==0);
+   assign lsu_p_vec.half =	(core_out_loadstore.sew==1);
+   assign lsu_p_vec.word =	(core_out_loadstore.sew==2);
+   assign lsu_p_vec.dword = '0;
+   assign lsu_p_vec.dma = '0;
+   assign lsu_p_vec.store_data_bypass_i0_e2_c2   = 0; 
+   assign lsu_p_vec.load_ldst_bypass_c1 = 0; 
+   assign lsu_p_vec.store_data_bypass_c1 = 0; 
+   assign lsu_p_vec.store_data_bypass_c2 = 0; 
+   assign lsu_p_vec.store_data_bypass_e4_c1[1:0] = 0; 
+   assign lsu_p_vec.store_data_bypass_e4_c2[1:0] = 0; 
+   assign lsu_p_vec.store_data_bypass_e4_c3[1:0] = 0; 
+
+   assign lsu_p = lsu_p_decode.valid ? lsu_p_decode : lsu_p_vec;
+
+   assign dec_lsu_offset_d_vec = 0; 
+   assign dec_lsu_offset_d = lsu_p_vec.valid ? dec_lsu_offset_d_vec : dec_lsu_offset_d_decode;
+
+   //rs1 = addr
+   assign exu_lsu_rs1_d_vec = core_out_loadstore.mem_addr; 
+   assign exu_lsu_rs1_d = lsu_p_vec.valid ? exu_lsu_rs1_d_vec : exu_lsu_rs1_d_exu;
+
+   //rs2 = store data
+   assign exu_lsu_rs2_d_vec = core_out_loadstore.store_data; 
+   assign exu_lsu_rs2_d = core_out_loadstore.store_valid ? exu_lsu_rs2_d_vec : exu_lsu_rs2_d_exu;
+
+   assign core_in_loadstore.store_ready = dccm_ready;
+   assign core_in_loadstore.load_valid = lsu_nonblock_load_data_valid; //Only if its vec....
+   assign core_in_loadstore.load_data = lsu_nonblock_load_data;
+
 
    // fetch
    ifu ifu (
@@ -997,6 +1077,9 @@ module swerv
    exu exu (
       .clk_override(dec_tlu_exu_clk_override),
       .rst_l(core_rst_l),
+      .exu_lsu_rs1_d(exu_lsu_rs1_d_exu), //JosePablo
+      .exu_lsu_rs2_d(exu_lsu_rs2_d_exu), //JosePablo
+      .exu_i0_result_e1(exu_i0_result_e1_exu), //JosePablo
       .*
    );
 
@@ -1017,6 +1100,8 @@ module swerv
    dec dec (
             .dbg_cmd_wrdata(dbg_cmd_wrdata[1:0]),
             .rst_l(core_rst_l),
+	    .lsu_p(lsu_p_decode), //JosePablo
+  	    .dec_lsu_offset_d(dec_lsu_offset_d_decode), //JosePablo
             .*
             );
 

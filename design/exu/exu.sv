@@ -211,7 +211,9 @@ module exu
    //With core
    	output logic exu_vpu_stall, 
 	input core_issue_bus core_issue,
-	output core_completed_bus core_completed
+	output core_completed_bus core_completed,
+	input core_in_loadstore_bus core_in_loadstore,
+	output core_out_loadstore_bus core_out_loadstore
    );
 
 
@@ -408,6 +410,8 @@ module exu
 	.CORE_ISSUE(core_issue), //Input from DEC
 	.CORE_COMPLETED(core_completed), // Output for WB?
 	.CORE_HALT(exu_vpu_stall), //OVI halt connecte to the pipeline
+	.CORE_IN_LOADSTORE(core_in_loadstore),
+	.CORE_OUT_LOADSTORE(core_out_loadstore),
 
 	//With VPU
 	.VPU_ISSUE_CREDIT(issue_credit), //wire connection 
@@ -433,10 +437,6 @@ wire [34-1:0] vpu_seqid;
 assign vpu_seqid = {vpu_load.seq_id.sb_id, vpu_load.seq_id.el_count, vpu_load.seq_id.el_off,
 		 vpu_load.seq_id.el_id, vpu_load.seq_id.v_reg};
 
-reg [`OVI_VL_WIDTH-1: 0] vl = 19; //8 elements per vector
-reg [`OVI_SEW_WIDTH-1: 0] sew = 2; //32-bit elements
-assign core_issue.vl = vl;
-assign core_issue.sew = sew;
 assign core_issue.opnd = i0_rs1_d;
 
 vpu_core #() core

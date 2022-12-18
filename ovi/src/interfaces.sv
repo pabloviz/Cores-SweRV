@@ -36,6 +36,20 @@ interface core_completed_bus();
 	wire [4:0] dst /* verilator public */;
 endinterface
 
+interface core_in_loadstore_bus();
+	wire [0:0] load_valid;
+	wire [`OVI_DATA_WIDTH-1:0] load_data;
+	wire [0:0] store_ready;
+endinterface
+
+interface core_out_loadstore_bus();
+	wire [`OVI_SEW_WIDTH-1:0] sew;
+	wire [0:0] load_valid;
+	wire [0:0] store_valid;
+	wire [`OVI_DATA_WIDTH-1:0] store_data;
+	wire [32-1:0] mem_addr;
+endinterface
+
 //=============================================
 	
 
