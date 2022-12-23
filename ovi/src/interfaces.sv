@@ -1,26 +1,8 @@
 `include "definitions.sv"
 
-//General interfaces
-interface v_csr();
-	wire [0:0] vill /* verilator public */;
-	wire [`OVI_SEW_WIDTH-1:0] vsew /* verilator public */;
-	wire [1:0] vlmul /* verilator public */;
-	wire [2:0] frm /* verilator public */;
-	wire [1:0] vxrm /* verilator public */;
-	wire [`OVI_VL_WIDTH-1:0] vl /* verilator public */;
-	wire [`OVI_VSTART_WIDTH-1:0] vstart /* verilator public */;
-endinterface
-
-interface seq_id_bus();
-	wire [`OVI_SBID_WIDTH-1:0] sb_id /* verilator public */; //33:29
-	wire [6:0] el_count /* verilator public*/; // 28:22
-	wire [5:0] el_off /* verilator public*/; //21:16
-	wire [10:0] el_id /* verilator public*/; //15:5
-	wire [4:0] v_reg /* verilator public*/; //4:0
-endinterface
 
 //=============================================
-//Core -> OVI interfaces (reduced from OVI specs, just the necessary signals)
+//Core <-> OVI interfaces (reduced from OVI specs, just the necessary signals)
 interface core_issue_bus();
 	wire [`OVI_INSTR_WIDTH-1:0] instr /* verilator public */;
 	wire [`OVI_VL_WIDTH-1:0] vl /* verilator public */;
@@ -33,16 +15,17 @@ endinterface
 interface core_completed_bus();
 	wire [`OVI_DATA_WIDTH-1:0] data /* verilator public */;
 	wire [0:0] valid /* verilator public */;
+	wire [0:0] wb /* verilator public */;
 	wire [4:0] dst /* verilator public */;
 endinterface
 
-interface core_in_loadstore_bus();
+interface core_response_loadstore_bus();
 	wire [0:0] load_valid;
-	wire [`OVI_DATA_WIDTH-1:0] load_data;
-	wire [0:0] store_ready;
+	wire [32-1:0] load_data;
+	wire [0:0] mem_ready;
 endinterface
 
-interface core_out_loadstore_bus();
+interface core_petition_loadstore_bus();
 	wire [`OVI_SEW_WIDTH-1:0] sew;
 	wire [0:0] load_valid;
 	wire [0:0] store_valid;
@@ -106,5 +89,21 @@ endinterface
 //=============================================
 
 
+//General interfaces
+interface v_csr();
+	wire [0:0] vill /* verilator public */;
+	wire [`OVI_SEW_WIDTH-1:0] vsew /* verilator public */;
+	wire [1:0] vlmul /* verilator public */;
+	wire [2:0] frm /* verilator public */;
+	wire [1:0] vxrm /* verilator public */;
+	wire [`OVI_VL_WIDTH-1:0] vl /* verilator public */;
+	wire [`OVI_VSTART_WIDTH-1:0] vstart /* verilator public */;
+endinterface
 
-
+interface seq_id_bus();
+	wire [`OVI_SBID_WIDTH-1:0] sb_id /* verilator public */; //33:29
+	wire [6:0] el_count /* verilator public*/; // 28:22
+	wire [5:0] el_off /* verilator public*/; //21:16
+	wire [10:0] el_id /* verilator public*/; //15:5
+	wire [4:0] v_reg /* verilator public*/; //4:0
+endinterface

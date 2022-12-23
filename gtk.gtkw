@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Sun Dec 18 22:31:40 2022
+[*] Fri Dec 23 17:17:15 2022
 [*]
-[dumpfile] "/home/pvizcaino/master/PD/Cores-SweRV/sim.vcd"
-[dumpfile_mtime] "Sun Dec 18 22:27:36 2022"
-[dumpfile_size] 484749414
+[dumpfile] "/home/pvizcaino/master/PD/Cores-SweRV/sim_core_vaxpy.vcd"
+[dumpfile_mtime] "Fri Dec 23 16:38:07 2022"
+[dumpfile_size] 460156293
 [savefile] "/home/pvizcaino/master/PD/Cores-SweRV/gtk.gtkw"
-[timestart] 0
+[timestart] 294000
 [size] 1920 1023
 [pos] -1 -1
-*-17.375645 466805 121085 301800 468500 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-15.375645 438100 195 295 305 120835 300900 394715 380215 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] TOP.
 [treeopen] TOP.tb_top.
 [treeopen] TOP.tb_top.rvtop.
@@ -65,51 +65,51 @@
 [treeopen] TOP.tb_top.rvtop.swerv.lsu.stbuf.
 [treeopen] TOP.tb_top.rvtop.swerv.lsu.stbuf.GenStBuf(0).
 [treeopen] TOP.tb_top.rvtop.swerv.lsu.stbuf.GenStBuf(1).
-[sst_width] 313
-[signals_width] 611
+[sst_width] 270
+[signals_width] 339
 [sst_expanded] 1
-[sst_vpaned_height] 578
+[sst_vpaned_height] 621
+@28
+TOP.tb_top.rvtop.swerv.dec.decode.clk
 @200
--DECODE_CTL
+-CPU PC
 @24
 TOP.tb_top.rvtop.swerv.dec_i0_pc_d[31:1]
 TOP.tb_top.rvtop.swerv.dec_i1_pc_d[31:1]
-@200
--
 @28
 TOP.tb_top.rvtop.swerv.dec.decode.vpu_stall
-TOP.tb_top.rvtop.swerv.dec.decode.clk
 @200
 -
--VPU_ISSUE/COMPL_VALID
+-VPU_ISSUE
 @28
 TOP.tb_top.rvtop.swerv.exu.ovi_module.VPU_ISSUE.valid[0]
+@200
+-VPU_COMPLETED
+@28
 TOP.tb_top.rvtop.swerv.exu.ovi_module.VPU_COMPLETED.valid[0]
 @200
+-VPU COMPLETED with result
+@28
+TOP.tb_top.rvtop.swerv.dec.decode.exu_vpu_finish
+@22
+TOP.tb_top.rvtop.swerv.dec.decode.exu_vpu_result[31:0]
+@200
 -
+-DECODE basics
 @28
 TOP.tb_top.rvtop.swerv.dec.decode.dec_i0_decode_d
 TOP.tb_top.rvtop.swerv.dec.decode.dec_i1_decode_d
-@200
--
-@28
-TOP.tb_top.rvtop.swerv.dec.decode.exu_vpu_finish
-TOP.tb_top.rvtop.swerv.dec.decode.vpu_wen_wb
-@22
-TOP.tb_top.rvtop.swerv.dec.decode.exu_vpu_result[31:0]
-TOP.tb_top.rvtop.swerv.dec.decode.i0_result_wb[31:0]
-TOP.tb_top.rvtop.swerv.dec.decode.dec_i0_waddr_wb[4:0]
-@28
-TOP.tb_top.rvtop.swerv.dec.decode.i0_wb_data_en
-@200
--
-@28
 TOP.tb_top.rvtop.swerv.dec.decode.i0_block_d
 TOP.tb_top.rvtop.swerv.dec.decode.i1_block_d
 @22
 TOP.tb_top.rvtop.swerv.dec.decode.dec_i0_instr_d[31:0]
 TOP.tb_top.rvtop.swerv.dec.decode.dec_i1_instr_d[31:0]
+@200
+-
+-DECODE I0 vector info
 @28
+TOP.tb_top.rvtop.swerv.dec.decode.dec_i0_mul_d
+TOP.tb_top.rvtop.swerv.dec.decode.dec_i1_mul_d
 TOP.tb_top.rvtop.swerv.dec.decode.debug_i0_is_vector
 TOP.tb_top.rvtop.swerv.dec.decode.debug_i0_legal
 TOP.tb_top.rvtop.swerv.dec.decode.debug_i0_v_load
@@ -119,28 +119,21 @@ TOP.tb_top.rvtop.swerv.dec.decode.debug_i0_vx_arith
 TOP.tb_top.rvtop.swerv.dec.decode.debug_i0_xv_arith
 TOP.tb_top.rvtop.swerv.is_vsetvli
 TOP.tb_top.rvtop.swerv.dec.decode.dec_i0_rs1_en_d
+TOP.tb_top.rvtop.swerv.dec.decode.i0_rd_en_d
 @200
 -
 @24
-TOP.tb_top.rvtop.swerv.dec_i0_immed_d[31:0]
-TOP.tb_top.rvtop.swerv.gpr_i0_rs1_d[31:0]
-TOP.tb_top.rvtop.swerv.i0_rs1_bypass_data_d[31:0]
-TOP.tb_top.rvtop.swerv.i0_rs1_bypass_data_e2[31:0]
-TOP.tb_top.rvtop.swerv.i0_rs1_bypass_data_e3[31:0]
-@28
-TOP.tb_top.rvtop.swerv.dec_i0_rs1_bypass_en_d
-TOP.tb_top.rvtop.swerv.dec_i0_rs1_bypass_en_e2
-TOP.tb_top.rvtop.swerv.dec_i0_rs1_bypass_en_e3
-@200
--
-@24
-TOP.tb_top.rvtop.swerv.clk
 TOP.tb_top.rvtop.swerv.read_vl[31:0]
+TOP.tb_top.rvtop.swerv.vlmax[31:0]
+@25
 TOP.tb_top.rvtop.swerv.vl[14:0]
+@24
 TOP.tb_top.rvtop.swerv.vl_ready
 TOP.tb_top.rvtop.swerv.sew[1:0]
 @200
--REGS
+-
+-REGISTER FILE
+-write_enable and write ports
 @28
 TOP.tb_top.rvtop.swerv.dec.dec_i0_wen_wb
 @24
@@ -148,7 +141,7 @@ TOP.tb_top.rvtop.swerv.dec.arf.wd0[31:0]
 TOP.tb_top.rvtop.swerv.dec.arf.wd1[31:0]
 TOP.tb_top.rvtop.swerv.dec.arf.wd2[31:0]
 @200
--
+-Registers from x0 to x31
 @24
 TOP.tb_top.rvtop.swerv.dec.arf.gpr_banks(0).gpr(1).gprff.dout[31:0]
 TOP.tb_top.rvtop.swerv.dec.arf.gpr_banks(0).gpr(2).gprff.dout[31:0]
@@ -163,9 +156,7 @@ TOP.tb_top.rvtop.swerv.dec.arf.gpr_banks(0).gpr(10).gprff.dout[31:0]
 TOP.tb_top.rvtop.swerv.dec.arf.gpr_banks(0).gpr(11).gprff.dout[31:0]
 TOP.tb_top.rvtop.swerv.dec.arf.gpr_banks(0).gpr(12).gprff.dout[31:0]
 TOP.tb_top.rvtop.swerv.dec.arf.gpr_banks(0).gpr(13).gprff.dout[31:0]
-@25
 TOP.tb_top.rvtop.swerv.dec.arf.gpr_banks(0).gpr(14).gprff.dout[31:0]
-@24
 TOP.tb_top.rvtop.swerv.dec.arf.gpr_banks(0).gpr(15).gprff.dout[31:0]
 TOP.tb_top.rvtop.swerv.dec.arf.gpr_banks(0).gpr(16).gprff.dout[31:0]
 TOP.tb_top.rvtop.swerv.dec.arf.gpr_banks(0).gpr(17).gprff.dout[31:0]
@@ -186,64 +177,139 @@ TOP.tb_top.rvtop.swerv.dec.arf.gpr_banks(0).gpr(31).gprff.dout[31:0]
 @200
 -
 -LOAD-STORE
--VEC_MEM_PETITION
-@28
-TOP.tb_top.rvtop.swerv.core_out_loadstore.load_valid[0]
-TOP.tb_top.rvtop.swerv.core_out_loadstore.store_valid[0]
-@22
-TOP.tb_top.rvtop.swerv.exu.ovi_module.send_store_data[31:0]
+-OVI->CPU Mem Petition
 @24
-TOP.tb_top.rvtop.swerv.exu.ovi_module.CORE_OUT_LOADSTORE.mem_addr[31:0]
+TOP.tb_top.rvtop.swerv.core_petition_loadstore.mem_addr[31:0]
+@28
+TOP.tb_top.rvtop.swerv.core_petition_loadstore.load_valid[0]
+TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_valid[0]
+@c00024
+TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+@28
+(0)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(1)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(2)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(3)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(4)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(5)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(6)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(7)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(8)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(9)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(10)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(11)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(12)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(13)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(14)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(15)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(16)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(17)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(18)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(19)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(20)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(21)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(22)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(23)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(24)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(25)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(26)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(27)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(28)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(29)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(30)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(31)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(32)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(33)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(34)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(35)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(36)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(37)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(38)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(39)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(40)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(41)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(42)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(43)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(44)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(45)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(46)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(47)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(48)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(49)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(50)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(51)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(52)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(53)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(54)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(55)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(56)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(57)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(58)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(59)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(60)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(61)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(62)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+(63)TOP.tb_top.rvtop.swerv.core_petition_loadstore.store_data[63:0]
+@1401200
+-group_end
 @200
--
--CORE_MEM_PETITION
+-CPU->CPU Mem Petition
 @28
 TOP.tb_top.rvtop.swerv.lsu.lsu_i0_valid_dc1
+@200
+-CPU Load Data ready
+@28
 TOP.tb_top.rvtop.swerv.dec.lsu_nonblock_load_data_valid
 @24
 TOP.tb_top.rvtop.swerv.lsu.lsu_nonblock_load_data[31:0]
-TOP.tb_top.rvtop.swerv.exu_lsu_rs1_d[31:0]
-TOP.tb_top.rvtop.swerv.lsu.lsu_addr_dc1[31:0]
 @200
--
+-CPU Store Data values
 @24
 TOP.tb_top.rvtop.swerv.lsu.store_data_dc2[63:0]
-TOP.tb_top.rvtop.swerv.lsu.store_data_dc3[63:0]
-@200
--
--EXE
-@28
-TOP.tb_top.rvtop.swerv.exu.exu_vpu_stall
+TOP.tb_top.rvtop.swerv.lsu.exu_lsu_rs1_d[31:0]
 @200
 -
 -OVI
+@28
+TOP.tb_top.rvtop.swerv.exu.ovi_module.curr_state[1:0]
+TOP.tb_top.rvtop.swerv.exu.ovi_module.instr_is_load
+TOP.tb_top.rvtop.swerv.exu.ovi_module.instr_is_store
+@200
+-LOAD/STORE buffers
 @22
-TOP.tb_top.rvtop.swerv.exu.ovi_module.buffer_store_index[5:0]
 TOP.tb_top.rvtop.swerv.exu.ovi_module.BUFFER_LOAD(0)[511:0]
 TOP.tb_top.rvtop.swerv.exu.ovi_module.BUFFER_STORE(0)[511:0]
 TOP.tb_top.rvtop.swerv.exu.ovi_module.BUFFER_STORE(1)[511:0]
-@28
-TOP.tb_top.rvtop.swerv.exu.ovi_module.CORE_IN_LOADSTORE.load_valid[0]
-TOP.tb_top.rvtop.swerv.exu.ovi_module.send_load_petition
-TOP.tb_top.rvtop.swerv.exu.ovi_module.send_store_petition
 @24
-TOP.tb_top.rvtop.swerv.exu.ovi_module.CORE_OUT_LOADSTORE.store_data[63:0]
-@28
-TOP.tb_top.rvtop.swerv.exu.ovi_module.buffer_load_ready
-TOP.tb_top.rvtop.swerv.exu.ovi_module.wb
-@24
-TOP.tb_top.rvtop.swerv.exu.ovi_module.n_subpackets[7:0]
-TOP.tb_top.rvtop.swerv.exu.ovi_module.subpackets[63:0]
-TOP.tb_top.rvtop.swerv.exu.ovi_module.transmited_packets[63:0]
-TOP.tb_top.rvtop.swerv.exu.ovi_module.n_packets[63:0]
-@22
-TOP.tb_top.rvtop.swerv.exu.ovi_module.instrlogbits[3:0]
-TOP.tb_top.rvtop.swerv.exu.ovi_module.reg_instrlogbits[3:0]
+TOP.tb_top.rvtop.swerv.exu.ovi_module.buffer_store_index[5:0]
+@200
+-Instruction information
 @24
 TOP.tb_top.rvtop.swerv.exu.ovi_module.instr_vl[14:0]
-@28
-TOP.tb_top.rvtop.swerv.exu.ovi_module.curr_state[1:0]
+TOP.tb_top.rvtop.swerv.exu.ovi_module.instr_sew[1:0]
 @200
+-
+-OVI Signals
+@28
+TOP.tb_top.rvtop.swerv.exu.ovi_module.VPU_SYNC_START
+TOP.tb_top.rvtop.swerv.exu.vpu_memop.sync_end[0]
+@200
+-LOADSTORE petitions
+@28
+TOP.tb_top.rvtop.swerv.exu.ovi_module.send_load_petition
+TOP.tb_top.rvtop.swerv.exu.ovi_module.send_store_petition
+@200
+-LOADSTORE packet control
+@24
+TOP.tb_top.rvtop.swerv.exu.ovi_module.n_packets[15:0]
+TOP.tb_top.rvtop.swerv.exu.ovi_module.chunk_offset[3:0]
+TOP.tb_top.rvtop.swerv.exu.ovi_module.sent_packets[15:0]
+TOP.tb_top.rvtop.swerv.exu.ovi_module.load_chunk_offset[3:0]
+TOP.tb_top.rvtop.swerv.exu.ovi_module.last_packet
+TOP.tb_top.rvtop.swerv.exu.ovi_module.load_packets[15:0]
+TOP.tb_top.rvtop.swerv.exu.ovi_module.last_load_packet
+@200
+-OVI state
 -VPU ISSUE
 @22
 TOP.tb_top.rvtop.swerv.exu.ovi_module.VPU_ISSUE.instr[31:0]
@@ -261,9 +327,6 @@ TOP.tb_top.rvtop.swerv.exu.ovi_module.VPU_COMPLETED.illegal[0]
 TOP.tb_top.rvtop.swerv.exu.ovi_module.VPU_COMPLETED.valid[0]
 @200
 -VPU_LOAD
-@28
-TOP.tb_top.rvtop.swerv.exu.ovi_module.VPU_SYNC_START
-TOP.tb_top.rvtop.swerv.exu.vpu_memop.sync_end[0]
 @22
 TOP.tb_top.rvtop.swerv.exu.vpu_load.data[511:0]
 @28
@@ -277,10 +340,11 @@ TOP.tb_top.rvtop.swerv.exu.ovi_module.el_count[6:0]
 TOP.tb_top.rvtop.swerv.exu.ovi_module.VPU_STORE.valid[0]
 TOP.tb_top.rvtop.swerv.exu.ovi_module.VPU_STORE_CREDIT
 @200
+-
+-INSIDE THE VPU
 -VPU WB
 @28
 TOP.tb_top.rvtop.swerv.exu.core.arithmetic_queue_inst.funct_3[2:0]
-TOP.tb_top.rvtop.swerv.exu.core.arithmetic_queue_inst.src1_is_scalar
 @22
 TOP.tb_top.rvtop.swerv.exu.core.multi_lane_instance(0).VECTOR_LANE_inst.lane_wb_data[63:0]
 TOP.tb_top.rvtop.swerv.exu.core.multi_lane_instance(1).VECTOR_LANE_inst.lane_wb_data[63:0]

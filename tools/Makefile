@@ -136,6 +136,7 @@ ${RV_ROOT}/ovi/bsc-vector-accelerator/src/modules/vector_lane/vector_register_fi
 verilator-build: ${TBFILES} ${BUILD_DIR}/defines.h test_tb_top.cpp
 	echo '`undef ASSERT_ON' >> ${BUILD_DIR}/common_defines.vh
 	$(VERILATOR) --cc -CFLAGS ${CFLAGS} $(defines) $(includes) \
+		--prof-cfuncs -CFLAGS -DVL_DEBUG \
 		-unroll-count 70000 --unroll-stmts 70000 -Wno-fatal \
 		$(EXTRA_SOURCES) \
                 -Wno-UNOPTFLAT \

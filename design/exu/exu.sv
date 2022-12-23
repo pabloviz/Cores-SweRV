@@ -212,8 +212,8 @@ module exu
    	output logic exu_vpu_stall, 
 	input core_issue_bus core_issue,
 	output core_completed_bus core_completed,
-	input core_in_loadstore_bus core_in_loadstore,
-	output core_out_loadstore_bus core_out_loadstore
+	input core_response_loadstore_bus core_response_loadstore,
+	output core_petition_loadstore_bus core_petition_loadstore
    );
 
 
@@ -392,16 +392,6 @@ module exu
    wire vpu_mask_idx_credit;
 
 
-  
-/* 
-   reg[7:0] counter = 0;
-   always @(posedge clk)
-   begin
-	counter <= counter + 1;
-   end
-   assign exu_vpu_stall =  //counter > 128 ? 1'b1 : 1'b0;
-*/
-
    ovi #() ovi_module 
 (
 	.CLK(clk),
@@ -410,8 +400,8 @@ module exu
 	.CORE_ISSUE(core_issue), //Input from DEC
 	.CORE_COMPLETED(core_completed), // Output for WB?
 	.CORE_HALT(exu_vpu_stall), //OVI halt connecte to the pipeline
-	.CORE_IN_LOADSTORE(core_in_loadstore),
-	.CORE_OUT_LOADSTORE(core_out_loadstore),
+	.CORE_RESPONSE_LOADSTORE(core_response_loadstore),
+	.CORE_PETITION_LOADSTORE(core_petition_loadstore),
 
 	//With VPU
 	.VPU_ISSUE_CREDIT(issue_credit), //wire connection 
@@ -429,7 +419,6 @@ module exu
 	
 );
 
-//JosePablo: This was missing
 wire [40-1:0] vpu_csr;
 assign vpu_csr = {vpu_issue.vcsr.vill, vpu_issue.vcsr.vsew, vpu_issue.vcsr.vlmul,
        vpu_issue.vcsr.frm, vpu_issue.vcsr.vxrm, vpu_issue.vcsr.vl, vpu_issue.vcsr.vstart};
@@ -489,17 +478,17 @@ vpu_core #() core
 	.mask_idx_last_idx_o(vpu_mask_idx.last_idx),
 	.mask_idx_credit_i(vpu_mask_idx_credit),
 
-.load_finish_valid_o(),
-.load_finish_sb_id_o(),
-.load_finish_no_retry_o(),
-.dbg_re_i(),
-.dbg_we_i(),
-.dbg_address_i(), 
-.dbg_read_data_o(),
-.dbg_read_data_valid_o(),
-.dbg_write_data_i(),
-.hpm_vpu_event_i(),
-.hpm_vpu_count_o()
+	.load_finish_valid_o(),
+	.load_finish_sb_id_o(),
+	.load_finish_no_retry_o(),
+	.dbg_re_i(),
+	.dbg_we_i(),
+	.dbg_address_i(), 
+	.dbg_read_data_o(),
+	.dbg_read_data_valid_o(),
+	.dbg_write_data_i(),
+	.hpm_vpu_event_i(),
+	.hpm_vpu_count_o()
 
     );
 

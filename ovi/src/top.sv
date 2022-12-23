@@ -10,6 +10,8 @@ module top #()
 wire core_halt /* verilator public */;
 core_completed_bus core_completed;
 core_issue_bus core_issue;
+core_petition_loadstore_bus core_petition_loadstore;
+core_response_loadstore_bus core_response_loadstore;
 
 //Vpu signals
 wire issue_credit;
@@ -25,33 +27,14 @@ vpu_load_bus vpu_load;
 wire vpu_mask_idx_credit;
 
 
-//Some extra I/O of the VPU
-/*
-// LOAD_FINISH
-output                      load_finish_valid_o, // TO AVISPADO
-output [SB_WIDTH-1:0]       load_finish_sb_id_o, // TO AVISPADO
-output                      load_finish_no_retry_o, // TO AVISPADO
-
-// DEBUG INTERFACE
-input                       dbg_re_i,
-input                       dbg_we_i,
-input [DBG_ADDR_WIDTH-1:0]  dbg_address_i, 
-output [DBG_DATA_WIDTH-1:0] dbg_read_data_o,
-output                      dbg_read_data_valid_o,
-input [DBG_DATA_WIDTH-1:0]  dbg_write_data_i,
-
-// PMU INTERFACE
-input [N_HPM-1:0][HPM_EVENT_WIDTH-1:0]      hpm_vpu_event_i,
-output [N_HPM-1:0]                          hpm_vpu_count_o
-*/
-
-
 automata #() core_automata
 (
 	.CLK(CLK),
 	.CORE_HALT(core_halt),
 	.CORE_COMPLETED(core_completed),
-	.CORE_ISSUE(core_issue)
+	.CORE_ISSUE(core_issue),
+	.CORE_RESPONSE_LOADSTORE(core_response_loadstore),
+	.CORE_PETITION_LOADSTORE(core_petition_loadstore)
 );
 
 
@@ -63,6 +46,8 @@ ovi #() ovi_module
 	.CORE_ISSUE(core_issue),
 	.CORE_COMPLETED(core_completed),
 	.CORE_HALT(core_halt),
+	.CORE_RESPONSE_LOADSTORE(core_response_loadstore),
+	.CORE_PETITION_LOADSTORE(core_petition_loadstore),
 
 	//With VPU
 	.VPU_ISSUE_CREDIT(issue_credit),
@@ -137,58 +122,24 @@ vpu_core #() core
 	.mask_idx_last_idx_o(vpu_mask_idx.last_idx),
 	.mask_idx_credit_i(vpu_mask_idx_credit),
 
-.load_finish_valid_o(),
-.load_finish_sb_id_o(),
-.load_finish_no_retry_o(),
-.dbg_re_i(),
-.dbg_we_i(),
-.dbg_address_i(), 
-.dbg_read_data_o(),
-.dbg_read_data_valid_o(),
-.dbg_write_data_i(),
-.hpm_vpu_event_i(),
-.hpm_vpu_count_o()
+	.load_finish_valid_o(),
+	.load_finish_sb_id_o(),
+	.load_finish_no_retry_o(),
+	.dbg_re_i(),
+	.dbg_we_i(),
+	.dbg_address_i(), 
+	.dbg_read_data_o(),
+	.dbg_read_data_valid_o(),
+	.dbg_write_data_i(),
+	.hpm_vpu_event_i(),
+	.hpm_vpu_count_o()
 
     );
 
 
-//VPU
-
-
-
-//Debug
 initial begin
 	$display("Starting simulation:");
 end
 
-//reg [64-1:0] debug_counter /* verilator public */ ;
-/*
-reg [2:0] counter_completed = 0;
-reg delay_completed = 0;
-reg active = 0;
-always @(posedge CLK)
-begin
-	debug_counter <= debug_counter + 1;
-	
-	delay_completed <= 1'b0;
-	if (active) begin
-		counter_completed <= counter_completed + 1;
-	end
-	if (counter_completed == 7) begin
-		counter_completed <= 3'b0;
-		active <= 1'b0;
-		delay_completed <= 1'b1;
-		
-	end
-	if (vpu_issue.valid) begin
-		active <= 1'b1; 
-	end
-
-	if (debug_counter == 50) begin
-		$finish;
-	end
-end
-*/
-//assign vpu_completed.valid = delay_completed;
 
 endmodule

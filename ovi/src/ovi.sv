@@ -7,8 +7,8 @@ module ovi #()
 	input core_issue_bus CORE_ISSUE,
 	output core_completed_bus CORE_COMPLETED,
 	output CORE_HALT,
-	input core_in_loadstore_bus CORE_IN_LOADSTORE,
-	output core_out_loadstore_bus CORE_OUT_LOADSTORE,
+	input core_response_loadstore_bus CORE_RESPONSE_LOADSTORE,
+	output core_petition_loadstore_bus CORE_PETITION_LOADSTORE,
 
 	//With VPU
 	input VPU_ISSUE_CREDIT,
@@ -35,39 +35,46 @@ state_t curr_state /* verilator public */ = WAIT_ISSUE;
 reg [3:0] issue_credits /* verilator public */= 4;
 v_csr vcsr;
 reg [`OVI_SBID_WIDTH-1:0] sbid_counter = 0;
-reg [5:0] buffer_store_index = 0; //1 is easier to debug :)
+reg [5:0] buffer_store_index = 0; 
 
-//Load Store
+//Instruction saved information:
 reg instr_is_store = 0;
 reg instr_is_load = 0;
 reg [5-1:0] instr_reg;
-reg [`OVI_VL_WIDTH-1: 0] instr_vl;
 reg [`OVI_SEW_WIDTH-1: 0] instr_sew;
-reg [64-1:0] n_packets; 
-reg [64-1:0] transmited_packets = 0;
-reg [64-1:0] subpackets = 0;
-reg [`OVI_MEMDATA_WIDTH-1:0] BUFFER_STORE [3];
+reg [`OVI_VL_WIDTH-1: 0] instr_vl;
+reg [4-1:0] reg_instrlogbits = 0;
+reg [8-1:0] reg_instrbits = 0;
+reg wb = 0;
+
+//Load & Store
+reg [32-1:0] reg_baseaddr = 0;
+reg [32-1:0] addr_offset = 0;
+reg [16-1:0] n_packets; 
+reg [16-1:0] sent_packets = 0;
+reg sync_end = 0;
+//Load
 reg [`OVI_MEMDATA_WIDTH-1:0] BUFFER_LOAD [1];
 reg buffer_load_ready=0;
+reg [16-1:0] load_packets = 0;
+reg [10:0] el_id;
+reg [6:0] el_count;
+reg send_load_petition = 0;
+//Store
+reg [`OVI_MEMDATA_WIDTH-1:0] BUFFER_STORE [32];
+reg vpu_send_store_credit = 0;
+reg send_store_petition = 0;
 
-reg [`OVI_DATA_WIDTH-1:0] reg_baseaddr = 0;
 
+
+///////////////////////////////////////
+//Wire computations
+//General:
+assign CORE_HALT = curr_state!=WAIT_ISSUE || issue_credits==0? 1'b1 : 1'b0;
 wire [4-1:0] instrlogbits = CORE_ISSUE.sew==0 ? 3 : CORE_ISSUE.sew==1 ? 4 : CORE_ISSUE.sew==2? 5 : 6;
 wire [8-1:0] instrbits = CORE_ISSUE.sew==0 ? 8 : CORE_ISSUE.sew==1 ? 16 : CORE_ISSUE.sew==2? 32 : 64;
 
-reg [4-1:0] reg_instrlogbits = 0;
-reg [8-1:0] reg_instrbits = 0;
-
-
-
-//Writeback
-reg wb = 0; //This should be for every sb_id
-
-///////////////////////////////////////
-//Asigns:
-assign CORE_HALT = curr_state!=WAIT_ISSUE || issue_credits==0? 1'b1 : 1'b0;
-
-//Issue bus (construct it from core issue)
+//Issue bus 
 assign VPU_ISSUE.instr = CORE_ISSUE.instr;
 assign VPU_ISSUE.scalar_opnd = CORE_ISSUE.opnd;
 assign VPU_ISSUE.sb_id = sbid_counter; 
@@ -87,148 +94,151 @@ assign VPU_DISPATCH.next_senior = VPU_ISSUE.valid;
 
 //Completed bus (just pass data)
 assign CORE_COMPLETED.data = VPU_COMPLETED.dest_reg;
-assign CORE_COMPLETED.valid = VPU_COMPLETED.valid & wb; 
+assign CORE_COMPLETED.valid = VPU_COMPLETED.valid; 
+assign CORE_COMPLETED.wb = wb && VPU_COMPLETED.valid; 
 assign CORE_COMPLETED.dst = instr_reg;
 
-//Memop (right now at 0)
-assign VPU_MEMOP.sync_end = (curr_state == RECEIVE_DATA || curr_state == SEND_DATA) && (transmited_packets == n_packets) ? 1'b1 : 1'b0;
+//Memop 
+assign VPU_MEMOP.sync_end = sync_end; 
 assign VPU_MEMOP.sb_id = sbid_counter - 1;
 
-//Load (right now at 0)
-assign VPU_LOAD.valid = (curr_state == SEND_DATA) && buffer_load_ready; //CORE_IN_LOADSTORE.load_valid; //(transmited_packets<n_packets); //This may change when we connect the core
+//VPU Load 
+assign VPU_LOAD.valid = buffer_load_ready; 
 assign VPU_LOAD.data = BUFFER_LOAD[0];
 assign VPU_LOAD.mask_valid = 1'b0;
 assign VPU_LOAD.seq_id.v_reg = instr_reg; 
-//wire [10:0] el_id = (transmited_packets) * (512>>reg_instrlogbits); //-1 because we want the last cycle's value, and I want to avoid having too many registers
-reg [10:0] el_id = 0; 
-reg [6:0] el_count = 0; 
 assign VPU_LOAD.seq_id.el_id = el_id; 
 assign VPU_LOAD.seq_id.el_off = 0;
 assign VPU_LOAD.seq_id.el_count = el_count; 
 assign VPU_LOAD.seq_id.sb_id = sbid_counter - 1;
 
-reg send_load_petition = 0; //to the core
-reg send_store_petition = 0; //to the core
-assign CORE_OUT_LOADSTORE.load_valid = send_load_petition;
-
-//TODO: Simplify this expression... with a counter?
-assign CORE_OUT_LOADSTORE.mem_addr = reg_baseaddr + ((transmited_packets) << (9-reg_instrlogbits+2))  + (subpackets<<instr_sew); //+2 because we want to multiply by 4 to generate address 
-
-wire [8-1:0] extra_elements = (instr_vl % (512>>reg_instrlogbits));
-wire [8-1:0] n_subpackets = (transmited_packets==n_packets-1 && extra_elements != 0) ? extra_elements : ((512>>reg_instrlogbits));
-
-//Store
-reg vpu_send_store_credit = 0;
-reg [31:0] send_store_data = 0;
-assign CORE_OUT_LOADSTORE.store_valid = send_store_petition;
-assign CORE_OUT_LOADSTORE.store_data = send_store_data;
-assign VPU_STORE_CREDIT = vpu_send_store_credit; //VPU_STORE.valid;
-
+//VPU Store
+assign VPU_STORE_CREDIT = vpu_send_store_credit;
 
 //Mask (right now at 0)
 assign VPU_MASK_IDX.valid = 1'b0;
 assign VPU_MASK_IDX.last_idx = 1'b0;
-//Mask credit (right now at 0)
 assign VPU_MASK_IDX_CREDIT = 1'b0;
 
+
+//OVI<->CPU Load & Store
+assign CORE_PETITION_LOADSTORE.mem_addr = reg_baseaddr + addr_offset; 
+assign CORE_PETITION_LOADSTORE.sew = 2; //hardcoded for 32-bit petitions, which is what the core accepts.
+wire [8-1:0] extra_elements = (instr_vl % (512>>reg_instrlogbits));
+//Sent packets
+wire [12-1:0] chunk = sent_packets[15:`SUBPACKET_BITS];
+wire [`SUBPACKET_BITS-1:0] chunk_offset = sent_packets[`SUBPACKET_BITS-1:0];
+wire last_packet = (sent_packets+1 == n_packets);
+wire last_chunk_offset = last_packet | &chunk_offset; //last chunk or offset=1111
+//Load
+//Received packets
+wire [12-1:0] load_chunk = load_packets[15:`SUBPACKET_BITS];
+wire [`SUBPACKET_BITS-1:0] load_chunk_offset = load_packets[`SUBPACKET_BITS-1:0];
+wire last_load_packet = (load_packets+1 == n_packets);
+wire last_load_chunk_offset = last_load_packet | &load_chunk_offset; //last chunk or chunk_offset=1111
+assign CORE_PETITION_LOADSTORE.load_valid = (curr_state == SEND_DATA) && send_load_petition;
+//Store
+assign CORE_PETITION_LOADSTORE.store_valid = send_store_petition; 
+assign CORE_PETITION_LOADSTORE.store_data = BUFFER_STORE[chunk][chunk_offset*`CPU_PACKET_WIDTH+:`CPU_PACKET_WIDTH];
 
 initial
 begin
     integer i;
-    integer j;
     for (i=0; i < 1; i=i+1)
     begin
         BUFFER_STORE[i] = 512'b0;
-	for(j=0; j<512; j+=32)
-	begin
-		BUFFER_LOAD[i][j+:32] = 0;
-	end
+	BUFFER_LOAD[i] = 512'b0; 
     end
  end
 
 always @(posedge CLK)
 begin
+	//Default signals
 	buffer_load_ready <= 1'b0;
 	send_load_petition <= 1'b0;
 	send_store_petition <= 1'b0;
 	vpu_send_store_credit <= 1'b0;
+	sync_end <= 1'b0;
 	//Fill issue bus
 	case(curr_state)
 		WAIT_ISSUE: begin
 			if (issue_credits > 0 && CORE_ISSUE.valid) begin
 				issue_credits <= issue_credits - 1;
 				sbid_counter <= sbid_counter + 1;
-				transmited_packets <= 0;
-				n_packets <= (CORE_ISSUE.vl<<(instrlogbits))/512 + (((CORE_ISSUE.vl<<instrlogbits)%512!=0)? 1 : 0);
+				sent_packets <= 0;
+				load_packets <= 0;
+				n_packets <= (CORE_ISSUE.vl << instrlogbits) >> $clog2(`CPU_PACKET_WIDTH);
 				instr_vl <= CORE_ISSUE.vl;
 				instr_sew <= CORE_ISSUE.sew;
 				instr_is_load <= CORE_ISSUE.instr[6:0] == 7'b0000111;
 				instr_is_store <= CORE_ISSUE.instr[6:0] == 7'b0100111;
 				instr_reg <= CORE_ISSUE.instr[11:7];
 				reg_baseaddr <= CORE_ISSUE.opnd;
-				reg_instrlogbits <= instrlogbits; //save it
-				reg_instrbits <= instrbits; //save it 
+				addr_offset <= 0;
+				reg_instrlogbits <= instrlogbits;
+				reg_instrbits <= instrbits;
 				wb <= CORE_ISSUE.wb;
-				//Change state
 				curr_state <= WAIT_ANSWER;
 			end
 		end
 		WAIT_ANSWER: begin
-			//Change state
 			if (VPU_COMPLETED.valid) begin
 				curr_state <= WAIT_ISSUE;
 			end
 			else if (VPU_SYNC_START) begin 
 				curr_state <= instr_is_store ? RECEIVE_DATA : instr_is_load ? SEND_DATA : WAIT_ANSWER;
-				send_load_petition <= instr_is_load;
-				//send_store_petition <= instr_is_store;
 				buffer_store_index <= 0;
 			end
 		end
-		RECEIVE_DATA: begin //STORES
-			if (transmited_packets == n_packets) begin
-				curr_state <= WAIT_ANSWER;
-			end
-			else begin
-				if (send_store_petition) begin
-					subpackets <= subpackets + 1;
-				end
-
-				if (VPU_STORE.valid) begin //The VPU sends us 512 bits of data, we store it in a buffer
-					BUFFER_STORE[buffer_store_index] <= VPU_STORE.data;
-					buffer_store_index <= buffer_store_index + 1;
-					subpackets <= 0;
-					//transmited_packets <= transmited_packets+1;
-				end
-				else if (CORE_IN_LOADSTORE.store_ready && buffer_store_index > transmited_packets) begin //On the next cycle, if the core is ready to receive a store subpackage, send it and shift buffer
-					send_store_petition <= 1'b1;
-					send_store_data <= BUFFER_STORE[transmited_packets][subpackets*32+:32];
-					//BUFFER_STORE[0] <= BUFFER_STORE[0] << reg_instrbits;
-					if (subpackets+1 == 512>>reg_instrlogbits) begin //last sub packet! return credit to VPU, set subpackets to 0
-						vpu_send_store_credit <= 1'b1;
-						subpackets <= 0;
-						transmited_packets <= transmited_packets+1;
+		RECEIVE_DATA/*from the vpu*/: begin //STORES
+			//if the core is ready and we have enough received chunks from the VPU, send petition. 
+			if (CORE_RESPONSE_LOADSTORE.mem_ready && buffer_store_index > chunk) begin
+				send_store_petition <= 1'b1;
+				//If it is the last offset of a 512bits chunk or its the last packet , return credit to the vpu
+				if (last_chunk_offset) begin 
+					vpu_send_store_credit <= 1'b1;
+					//If it was the last packet, in the next cycle change to wait answer and send sync_end
+					if (last_packet) begin
+						curr_state <= WAIT_ANSWER;
+						sync_end <= 1'b1;
 					end
 				end
 			end
-		end
-		SEND_DATA: begin //LOADS
-			if (transmited_packets == n_packets) begin
-				curr_state <= WAIT_ANSWER;
+			//The VPU sends us 512 bits of data, we store it in a buffer
+			if (VPU_STORE.valid) begin 
+				BUFFER_STORE[buffer_store_index] <= VPU_STORE.data;
+				buffer_store_index <= buffer_store_index + 1;
 			end
-			else if (CORE_IN_LOADSTORE.load_valid) begin //Data arrives from core
-				BUFFER_LOAD[0][subpackets*32+:32] <= CORE_IN_LOADSTORE.load_data;
-				if (subpackets+1 == n_subpackets) begin //last sub packet! mark that data is ready, restart subpackets, ...
-					buffer_load_ready <= 1'b1;
-					el_id <= (transmited_packets) << (9-reg_instrlogbits); //(512 = 2^9)
-					el_count <= (transmited_packets==n_packets-1) ? (instr_vl % (512>>reg_instrlogbits)) : ((512>>reg_instrlogbits));
-					subpackets <= 0;
-					transmited_packets <= transmited_packets+1;
-				end
-				else begin
-					subpackets <= subpackets + 1;
-				end
+			//Update addr if we send a store petition
+			if (send_store_petition) begin
+				//8 -> +1, 16 -> +2, 32 -> +4, 64 -> +8
+				addr_offset <= addr_offset + (reg_instrbits>>3);
+				sent_packets <= sent_packets+1;
+			end
+		end
+		SEND_DATA/*to the vpu*/: begin //LOADS
+			if (CORE_RESPONSE_LOADSTORE.mem_ready && (sent_packets < n_packets)) begin
 				send_load_petition <= 1'b1;
+			end
+			if (CORE_RESPONSE_LOADSTORE.load_valid) begin //Data arrives from core, store it
+				BUFFER_LOAD[0][load_chunk_offset*`CPU_PACKET_WIDTH+:`CPU_PACKET_WIDTH] <= CORE_RESPONSE_LOADSTORE.load_data;
+				load_packets <= load_packets+1;
+				//If last offset, send data to the VPU
+				if (last_load_chunk_offset) begin 
+					buffer_load_ready <= 1'b1;
+					el_id <= (load_chunk) << ($clog2(512)-reg_instrlogbits);//(sew32: sent_packets*16)
+					el_count <= (last_load_packet) ? extra_elements: ((512>>reg_instrlogbits));
+					//If it was the last packet, in the next cycle change to wait answer and send sync_end
+					if (last_load_packet) begin
+						curr_state <= WAIT_ANSWER;
+						sync_end <= 1'b1;
+					end
+				end
+			end
+			if (send_load_petition) begin
+				//8 -> +1, 16 -> +2, 32 -> +4, 64 -> +8
+				addr_offset <= addr_offset + (reg_instrbits>>3);
+				sent_packets <= sent_packets+1;
 			end
 		end
 		default: begin

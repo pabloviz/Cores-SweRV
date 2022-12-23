@@ -1001,25 +1001,26 @@ module swerv
    //JosePablo: These communicates the decode and the exu modules for vector instructions
    core_completed_bus core_completed;
    core_issue_bus core_issue;
-   core_in_loadstore_bus core_in_loadstore;
-   core_out_loadstore_bus core_out_loadstore;
+   core_response_loadstore_bus core_response_loadstore;
+   core_petition_loadstore_bus core_petition_loadstore;
 
 
     //JosePablo: vl and sew control
     wire is_vsetvli; //defined in dec
-    reg [`OVI_VL_WIDTH-1: 0] vl = 0; 
-    reg [`OVI_SEW_WIDTH-1: 0] sew = 0;
+    reg [`OVI_VL_WIDTH-1: 0] vl = 19; //default values, for testing purposes 
+    reg [`OVI_SEW_WIDTH-1: 0] sew = 2;
     assign core_issue.vl = vl;
     assign core_issue.sew = sew;
 
     wire [31:0] read_vl = dec_i0_rs1_bypass_en_d ? i0_rs1_bypass_data_d  : dec_i0_rs1_bypass_en_e2 ? i0_rs1_bypass_data_e2 : dec_i0_rs1_bypass_en_e3 ? i0_rs1_bypass_data_e3 : gpr_i0_rs1_d;
     reg vl_ready = 0;
+    wire [31:0] vlmax = 2048 >> dec_i0_immed_d[3:2];
     always @(posedge clk)
     begin
 	vl_ready <= 1'b0;
     	if (is_vsetvli) begin //this signal comes from decode
-		if (read_vl > 256) begin
-			vl <= 256;
+		if (read_vl > vlmax) begin
+			vl <= vlmax;
 		end
 		else begin
 			vl <= read_vl;
@@ -1033,12 +1034,12 @@ module swerv
 
 
    //JosePablo: For vector loads and stores 
-   assign lsu_p_vec.valid = core_out_loadstore.load_valid | core_out_loadstore.store_valid;
-   assign lsu_p_vec.load =  core_out_loadstore.load_valid;
-   assign lsu_p_vec.store = core_out_loadstore.store_valid; 
-   assign lsu_p_vec.by =	(core_out_loadstore.sew==0);
-   assign lsu_p_vec.half =	(core_out_loadstore.sew==1);
-   assign lsu_p_vec.word =	(core_out_loadstore.sew==2);
+   assign lsu_p_vec.valid = core_petition_loadstore.load_valid | core_petition_loadstore.store_valid;
+   assign lsu_p_vec.load =  core_petition_loadstore.load_valid;
+   assign lsu_p_vec.store = core_petition_loadstore.store_valid; 
+   assign lsu_p_vec.by =	(core_petition_loadstore.sew==0);
+   assign lsu_p_vec.half =	(core_petition_loadstore.sew==1);
+   assign lsu_p_vec.word =	(core_petition_loadstore.sew==2);
    assign lsu_p_vec.dword = '0;
    assign lsu_p_vec.dma = '0;
    assign lsu_p_vec.store_data_bypass_i0_e2_c2   = 0; 
@@ -1049,22 +1050,22 @@ module swerv
    assign lsu_p_vec.store_data_bypass_e4_c2[1:0] = 0; 
    assign lsu_p_vec.store_data_bypass_e4_c3[1:0] = 0; 
 
-   assign lsu_p = lsu_p_decode.valid ? lsu_p_decode : lsu_p_vec;
+   assign lsu_p = lsu_p_vec.valid ? lsu_p_vec : lsu_p_decode;
 
    assign dec_lsu_offset_d_vec = 0; 
    assign dec_lsu_offset_d = lsu_p_vec.valid ? dec_lsu_offset_d_vec : dec_lsu_offset_d_decode;
 
    //rs1 = addr
-   assign exu_lsu_rs1_d_vec = core_out_loadstore.mem_addr; 
+   assign exu_lsu_rs1_d_vec = core_petition_loadstore.mem_addr; 
    assign exu_lsu_rs1_d = lsu_p_vec.valid ? exu_lsu_rs1_d_vec : exu_lsu_rs1_d_exu;
 
    //rs2 = store data
-   assign exu_lsu_rs2_d_vec = core_out_loadstore.store_data; 
-   assign exu_lsu_rs2_d = core_out_loadstore.store_valid ? exu_lsu_rs2_d_vec : exu_lsu_rs2_d_exu;
+   assign exu_lsu_rs2_d_vec = core_petition_loadstore.store_data; 
+   assign exu_lsu_rs2_d = core_petition_loadstore.store_valid ? exu_lsu_rs2_d_vec : exu_lsu_rs2_d_exu;
 
-   assign core_in_loadstore.store_ready = dccm_ready;
-   assign core_in_loadstore.load_valid = lsu_nonblock_load_data_valid; //Only if its vec....
-   assign core_in_loadstore.load_data = lsu_nonblock_load_data;
+   assign core_response_loadstore.mem_ready = dccm_ready; //lsu_idle_any;  
+   assign core_response_loadstore.load_valid = lsu_nonblock_load_data_valid; //Only if its vec....
+   assign core_response_loadstore.load_data = lsu_nonblock_load_data;
 
 
    // fetch

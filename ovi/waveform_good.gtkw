@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Mon Nov 21 20:40:21 2022
+[*] Fri Dec 23 16:18:05 2022
 [*]
 [dumpfile] "/home/pvizcaino/master/PD/Cores-SweRV/ovi/sim.vcd"
-[dumpfile_mtime] "Mon Nov 21 20:23:11 2022"
-[dumpfile_size] 6526757
+[dumpfile_mtime] "Fri Dec 23 16:14:28 2022"
+[dumpfile_size] 5685071
 [savefile] "/home/pvizcaino/master/PD/Cores-SweRV/ovi/waveform_good.gtkw"
 [timestart] 1
-[size] 1863 980
+[size] 1920 1023
 [pos] -1 -1
-*-6.917315 44 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-6.917315 464 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] TOP.
 [treeopen] TOP.top.
 [treeopen] TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.
@@ -27,9 +27,9 @@
 [treeopen] TOP.top.core.vcu_splitter_inst.
 [treeopen] TOP.top.ovi_module.
 [sst_width] 224
-[signals_width] 340
+[signals_width] 328
 [sst_expanded] 1
-[sst_vpaned_height] 668
+[sst_vpaned_height] 647
 @28
 TOP.top.CLK
 TOP.top.RESET
@@ -40,33 +40,86 @@ TOP.top.core_automata.halt
 @24
 TOP.top.core_automata.sew[1:0]
 TOP.top.core_automata.vl[14:0]
+@22
+TOP.top.core_automata.read_instruction[31:0]
+@200
+-CORE ISSUE
+@29
+TOP.top.ovi_module.CORE_ISSUE.valid[0]
+@200
+-CORE_COMPLETED
+@29
+TOP.top.ovi_module.CORE_COMPLETED.valid[0]
+@24
+TOP.top.ovi_module.CORE_COMPLETED.data[63:0]
+@28
+TOP.top.ovi_module.CORE_COMPLETED.wb[0]
+@200
+-
+-LOAD / STORE things
+@29
+TOP.top.ovi_module.VPU_SYNC_START
+TOP.top.vpu_memop.sync_end[0]
+@24
+TOP.top.ovi_module.n_packets[15:0]
+TOP.top.ovi_module.sent_packets[15:0]
+@28
+TOP.top.ovi_module.last_packet
+@24
+TOP.top.ovi_module.load_packets[15:0]
+@28
+TOP.top.ovi_module.last_load_packet
+@22
+TOP.top.ovi_module.chunk[11:0]
+@24
+TOP.top.ovi_module.chunk_offset[3:0]
+@200
+-OVI->CPU Mem Petition
+@22
+TOP.top.ovi_module.CORE_PETITION_LOADSTORE.mem_addr[31:0]
+@29
+TOP.top.ovi_module.CORE_PETITION_LOADSTORE.load_valid[0]
+@28
+TOP.top.ovi_module.CORE_PETITION_LOADSTORE.store_valid[0]
+@24
+TOP.top.ovi_module.CORE_PETITION_LOADSTORE.store_data[63:0]
+@200
+-CPU->OVI Mem Response
+@28
+TOP.top.ovi_module.CORE_RESPONSE_LOADSTORE.mem_ready[0]
+@29
+TOP.top.ovi_module.CORE_RESPONSE_LOADSTORE.load_valid[0]
+@24
+TOP.top.ovi_module.CORE_RESPONSE_LOADSTORE.load_data[31:0]
+@200
+-OVI->VPU Load 
+@29
+TOP.top.ovi_module.VPU_LOAD.valid[0]
+@22
+TOP.top.ovi_module.VPU_LOAD.data[511:0]
+@200
+-VPU->OVI Store
+@28
+TOP.top.ovi_module.VPU_STORE.valid[0]
+@22
+TOP.top.ovi_module.VPU_STORE.data[511:0]
 @200
 -
 -OVI
 @22
 TOP.top.ovi_module.curr_state[1:0]
-TOP.top.ovi_module.issue_credits[3:0]
 @28
 TOP.top.ovi_module.instr_is_load
 TOP.top.ovi_module.instr_is_store
-@22
-TOP.top.ovi_module.transmited_packets[63:0]
-TOP.top.ovi_module.n_packets[63:0]
 @200
--
+-BUFFERS
 @22
 TOP.top.ovi_module.BUFFER_LOAD(0)[511:0]
-TOP.top.ovi_module.BUFFER_LOAD(1)[511:0]
-TOP.top.ovi_module.BUFFER_LOAD(2)[511:0]
-@200
--
-@22
 TOP.top.ovi_module.BUFFER_STORE(0)[511:0]
 TOP.top.ovi_module.BUFFER_STORE(1)[511:0]
-TOP.top.ovi_module.BUFFER_STORE(2)[511:0]
 @200
 -
--TOP module
+-OVI SIGNALS
 -Vpu issue
 @22
 TOP.top.vpu_issue.instr[31:0]
@@ -77,6 +130,16 @@ TOP.top.vpu_issue.valid[0]
 @22
 TOP.top.vpu_csr[39:0]
 @200
+-vpu completed
+@24
+TOP.top.vpu_completed.dest_reg[63:0]
+@28
+TOP.top.vpu_completed.illegal[0]
+@22
+TOP.top.vpu_completed.sb_id[4:0]
+@28
+TOP.top.vpu_completed.valid[0]
+@200
 -Vpu dispatch
 @28
 TOP.top.vpu_dispatch.kill[0]
@@ -84,18 +147,11 @@ TOP.top.vpu_dispatch.next_senior[0]
 @22
 TOP.top.vpu_dispatch.sb_id[4:0]
 @200
--sync_start
-@28
-TOP.top.ovi_module.VPU_SYNC_START
-@200
 -vpu memop
 @22
 TOP.top.vpu_memop.sb_id[4:0]
-@28
-TOP.top.vpu_memop.sync_end[0]
-@22
 TOP.top.vpu_memop.vstart_vlfof[14:0]
-@201
+@200
 -vpu load
 @22
 TOP.top.vpu_load.data[511:0]
@@ -118,19 +174,6 @@ TOP.top.vpu_store.valid[0]
 -vpu_store_credit
 @28
 TOP.top.ovi_module.VPU_STORE_CREDIT
-@200
--vpu completed
-@24
-TOP.top.vpu_completed.dest_reg[63:0]
-@22
-TOP.top.vpu_completed.fflags[4:0]
-@28
-TOP.top.vpu_completed.illegal[0]
-@22
-TOP.top.vpu_completed.sb_id[4:0]
-@28
-TOP.top.vpu_completed.vxsat[0]
-TOP.top.vpu_completed.valid[0]
 @200
 -
 -LANES
@@ -157,259 +200,5 @@ TOP.top.core.multi_lane_instance(6).VECTOR_LANE_inst.wb_valid
 TOP.top.core.multi_lane_instance(7).VECTOR_LANE_inst.wb_valid
 @200
 -
--
--UNPACKER
-@24
-TOP.top.core.unpacker_inst.sew[1:0]
-@28
-TOP.top.core.unpacker_inst.use_only_vs2
-@24
-TOP.top.core.unpacker_inst.vlen[11:0]
-@28
-TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.is_reduction
-TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.new_instr_i
-TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.pablolatency[2:0]
-TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.vsew_i[2:0]
-@22
-TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.lane_64b_length_i[5:0]
-TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.total_elem_length_i[11:0]
-TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.granted_instr_d[145:0]
-TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.op_state_q[3:0]
-@200
--
-@22
-TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_count_q[11:0]
-@28
-TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.src_buffer_ready_i
-TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.src_buffer_en_int
-@22
-TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.phase_q[3:0]
-@28
-TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.fu_valid_op_int
-@200
--
--ELEN
-@28
-TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.vcu_lane_inst.actv_inbound[0]
-@22
-TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.vcu_lane_inst.vcu_rd_elen_blocks_o[5:0]
-TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.vcu_lane_inst.vcu_rd_elen_blocks(0)[5:0]
-TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.vcu_lane_inst.vcu_lane_control_gen(0).vcu_lane_control_inst.vcu_rd_elen_blocks_o[5:0]
-TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.vcu_lane_inst.vcu_lane_control_gen(0).vcu_lane_control_inst.rd_elen_blocks[5:0]
-TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.vcu_lane_inst.vcu_lane_control_gen(0).vcu_lane_control_inst.vcu_rd_elements_to_elen.INCREMENT[31:0]
-@28
-TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.vcu_lane_inst.vcu_lane_control_gen(0).vcu_lane_control_inst.vcu_rd_elements_to_elen.elen_blocks_assignment_with_increment.vec_elen_vsew[2:0]
-@22
-TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.vcu_lane_inst.vcu_lane_control_gen(0).vcu_lane_control_inst.vcu_rd_elements_to_elen.vec_elen_div[5:0]
-TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.vcu_lane_inst.vcu_lane_control_gen(0).vcu_lane_control_inst.vcu_rd_elements_to_elen.vec_elen_array(0)[5:0]
-TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.vcu_lane_inst.vcu_lane_control_gen(0).vcu_lane_control_inst.vcu_rd_elements_to_elen.vec_elen_array(1)[5:0]
-TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.vcu_lane_inst.vcu_lane_control_gen(0).vcu_lane_control_inst.vcu_rd_elements_to_elen.vec_elen_array(2)[5:0]
-TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.vcu_lane_inst.vcu_lane_control_gen(0).vcu_lane_control_inst.vcu_rd_elements_to_elen.vec_elen_array(3)[5:0]
-TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.vcu_splitter_elements[62:0]
-TOP.top.core.vcu_splitter_inst.vcu_elements_o(0)[62:0]
-TOP.top.core.vcu_splitter_inst.vcu_rd_elements_inst.elements_lane_o[71:0]
-TOP.top.core.vcu_splitter_inst.vcu_rd_elements_inst.vlen_fourth_op[11:0]
-TOP.top.core.vcu_splitter_inst.vcu_rd_elements_inst.vlen_fifth_op[95:0]
-TOP.top.core.vcu_splitter_inst.vcu_rd_elements_inst.vlen_third_op[11:0]
-TOP.top.core.vcu_splitter_inst.vcu_rd_elements_inst.vlen_incr[95:0]
-TOP.top.core.vcu_splitter_inst.vcu_rd_elements_inst.vlen_offsets[95:0]
-TOP.top.core.vcu_splitter_inst.vcu_rd_elements_inst.vlen_incr[95:0]
-TOP.top.core.vcu_splitter_inst.vcu_rd_elements_inst.vlen_subs[95:0]
-@28
-TOP.top.core.vcu_splitter_inst.vcu_rd_elements_inst.vsew_i[1:0]
-TOP.top.core.vcu_splitter_inst.vcu_rd_elements_inst.negated_vsew[1:0]
-@c00022
-TOP.top.core.vcu_splitter_inst.vcu_rd_elements_inst.vlen_comp_incr[11:0]
-@28
-(0)TOP.top.core.vcu_splitter_inst.vcu_rd_elements_inst.vlen_comp_incr[11:0]
-(1)TOP.top.core.vcu_splitter_inst.vcu_rd_elements_inst.vlen_comp_incr[11:0]
-(2)TOP.top.core.vcu_splitter_inst.vcu_rd_elements_inst.vlen_comp_incr[11:0]
-(3)TOP.top.core.vcu_splitter_inst.vcu_rd_elements_inst.vlen_comp_incr[11:0]
-(4)TOP.top.core.vcu_splitter_inst.vcu_rd_elements_inst.vlen_comp_incr[11:0]
-(5)TOP.top.core.vcu_splitter_inst.vcu_rd_elements_inst.vlen_comp_incr[11:0]
-(6)TOP.top.core.vcu_splitter_inst.vcu_rd_elements_inst.vlen_comp_incr[11:0]
-(7)TOP.top.core.vcu_splitter_inst.vcu_rd_elements_inst.vlen_comp_incr[11:0]
-(8)TOP.top.core.vcu_splitter_inst.vcu_rd_elements_inst.vlen_comp_incr[11:0]
-(9)TOP.top.core.vcu_splitter_inst.vcu_rd_elements_inst.vlen_comp_incr[11:0]
-(10)TOP.top.core.vcu_splitter_inst.vcu_rd_elements_inst.vlen_comp_incr[11:0]
-(11)TOP.top.core.vcu_splitter_inst.vcu_rd_elements_inst.vlen_comp_incr[11:0]
-@1401200
--group_end
-@22
-TOP.top.core.vcu_splitter_inst.vcu_rd_elements_inst.vec_incr[47:0]
-TOP.top.core.vcu_splitter_inst.vcu_rd_elements_inst.vlen_i[11:0]
-TOP.top.core.vcu_splitter_inst.vcu_rd_elements_inst.vlen_comp_limit[95:0]
-TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.vcu_lane_inst.vcu_lane_control_gen(0).vcu_lane_control_inst.rd_elements_i[8:0]
-@c00022
-TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.vcu_lane_inst.vcu_lane_control_gen(0).vcu_lane_control_inst.vcu_rd_elements_to_elen.src_info_i[10:0]
-@28
-(0)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.vcu_lane_inst.vcu_lane_control_gen(0).vcu_lane_control_inst.vcu_rd_elements_to_elen.src_info_i[10:0]
-(1)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.vcu_lane_inst.vcu_lane_control_gen(0).vcu_lane_control_inst.vcu_rd_elements_to_elen.src_info_i[10:0]
-(2)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.vcu_lane_inst.vcu_lane_control_gen(0).vcu_lane_control_inst.vcu_rd_elements_to_elen.src_info_i[10:0]
-(3)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.vcu_lane_inst.vcu_lane_control_gen(0).vcu_lane_control_inst.vcu_rd_elements_to_elen.src_info_i[10:0]
-(4)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.vcu_lane_inst.vcu_lane_control_gen(0).vcu_lane_control_inst.vcu_rd_elements_to_elen.src_info_i[10:0]
-(5)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.vcu_lane_inst.vcu_lane_control_gen(0).vcu_lane_control_inst.vcu_rd_elements_to_elen.src_info_i[10:0]
-(6)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.vcu_lane_inst.vcu_lane_control_gen(0).vcu_lane_control_inst.vcu_rd_elements_to_elen.src_info_i[10:0]
-(7)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.vcu_lane_inst.vcu_lane_control_gen(0).vcu_lane_control_inst.vcu_rd_elements_to_elen.src_info_i[10:0]
-(8)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.vcu_lane_inst.vcu_lane_control_gen(0).vcu_lane_control_inst.vcu_rd_elements_to_elen.src_info_i[10:0]
-(9)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.vcu_lane_inst.vcu_lane_control_gen(0).vcu_lane_control_inst.vcu_rd_elements_to_elen.src_info_i[10:0]
-(10)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.vcu_lane_inst.vcu_lane_control_gen(0).vcu_lane_control_inst.vcu_rd_elements_to_elen.src_info_i[10:0]
-@1401200
--group_end
-@22
-TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.vcu_lane_inst.vcu_lane_control_gen(0).vcu_lane_control_inst.vcu_rd_elements_to_elen.vec_elen_o[5:0]
-@200
--
-@c00022
-TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-@28
-(0)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(1)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(2)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(3)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(4)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(5)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(6)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(7)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(8)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(9)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(10)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(11)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(12)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(13)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(14)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(15)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(16)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(17)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(18)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(19)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(20)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(21)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(22)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(23)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(24)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(25)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(26)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(27)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(28)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(29)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(30)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(31)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(32)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(33)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(34)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(35)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(36)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(37)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(38)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(39)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(40)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(41)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(42)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(43)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(44)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(45)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(46)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(47)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(48)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(49)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(50)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(51)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(52)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(53)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(54)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(55)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(56)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(57)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(58)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(59)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(60)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(61)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(62)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(63)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(64)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(65)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(66)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(67)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(68)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(69)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(70)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(71)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(72)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(73)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(74)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(75)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(76)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(77)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(78)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(79)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(80)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(81)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(82)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(83)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(84)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(85)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(86)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(87)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(88)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(89)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(90)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(91)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(92)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(93)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(94)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(95)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(96)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(97)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(98)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(99)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(100)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(101)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(102)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(103)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(104)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(105)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(106)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(107)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(108)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(109)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(110)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(111)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(112)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(113)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(114)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(115)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(116)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(117)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(118)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(119)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(120)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(121)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(122)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(123)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(124)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(125)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(126)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(127)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(128)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(129)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(130)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(131)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(132)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(133)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(134)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(135)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(136)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(137)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(138)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(139)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(140)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(141)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(142)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(143)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(144)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-(145)TOP.top.core.multi_lane_instance(0).VECTOR_LANE_inst.reduction_wrapper_inst.inbound_instr_d[145:0]
-@1401200
--group_end
 [pattern_trace] 1
 [pattern_trace] 0

@@ -82,7 +82,7 @@ module dec_decode_ctl
    input logic exu_div_stall,                         // div executing: stall decode
    input logic [31:0] exu_div_result,                 // div result
    output core_issue_bus core_issue,	    // JosePablo
-   output core_completed_bus core_completed,	    // JosePablo
+   input core_completed_bus core_completed,	    // JosePablo
    input logic exu_vpu_stall,                         // JosePablo
    output logic is_vsetvli,			//JosePablo
 
@@ -988,28 +988,28 @@ end : cam_array
 
    end
 
-
-
-
-
 // end pmu
 
    dec_dec_ctl i0_dec (.inst(i0[31:0]),.out(i0_dp_raw));
 
    dec_dec_ctl i1_dec (.inst(i1[31:0]),.out(i1_dp_raw));
 
+
+
+
+
+//JosePablo 
 assign is_vsetvli = i0_dp_raw.vsetvli;
 assign core_issue.instr = i0[31:0]; 
 assign core_issue.valid = i0_dp_raw.is_vector & dec_i0_decode_d; 
-assign core_issue.wb = i0_dp_raw.rd & i0[31:26]!=0;
+assign core_issue.wb = i0_dp_raw.rd & i0[31:26]!=0; //avoid wb on reduction
 reg [31:0] exu_vpu_result;
 wire exu_vpu_finish;
-//rvdff  #(1) vpuresultff (.*, .clk(clk), .din(core_completed.data[31:0]), .dout(exu_vpu_result[31:0]));
 always @(posedge clk)
 begin
 	exu_vpu_result <= core_completed.data[31:0];
 end
-assign exu_vpu_finish = core_completed.valid;
+assign exu_vpu_finish = core_completed.wb;
 assign vpu_waddr_wb = core_completed.dst;
 
 //JosePablo Debug
@@ -1027,6 +1027,11 @@ assign vpu_waddr_wb = core_completed.dst;
   logic debug_i1_v_store = i1_dp_raw.v_store;
   logic debug_i1_is_vector = i1_dp_raw.is_vector;
   logic debug_i1_legal = i1_dp_raw.legal;
+
+
+
+
+
 
    rvdff #(1) lsu_idle_ff (.*, .clk(active_clk), .din(lsu_halt_idle_any), .dout(lsu_idle));
 
@@ -2570,7 +2575,7 @@ assign out.imm12 = (!i[13]&!i[12]&i[6]&i[4]&!i[2]) | (i[6]&!i[4]&!i[3]&i[2]) | (
     i[14]&i[12]&i[6]&!i[5]) | (i[13]&!i[5]&i[4]&!i[2]) | (!i[12]&!i[5]
     &i[4]&!i[2]);
 
-assign out.rd = (i[13]&!i[12]&i[4]) | (i[14]&i[12]&i[4]) | (i[6]&!i[4]&i[2]) | (
+assign out.rd = (!i[14]&i[13]&!i[12]&i[4]) | (i[14]&i[12]&i[4]) | (i[6]&!i[4]&i[2]) | (
     !i[6]&!i[5]&!i[3]) | (i[5]&i[4]);
 
 assign out.shimm5 = (!i[14]&i[12]&i[6]&!i[5]) | (!i[13]&i[12]&!i[5]&i[4]&!i[2]);
@@ -2697,7 +2702,7 @@ assign out.vsetvli = (i[14]&i[12]&i[6]&!i[5]);
 
 assign out.vv_arith = (!i[14]&!i[13]&i[6]&!i[5]);
 
-assign out.xv_arith = (i[13]&!i[12]&i[6]&!i[5]);
+assign out.xv_arith = (!i[14]&i[13]&!i[12]&i[6]&!i[5]);
 
 assign out.vi_arith = (!i[14]&i[12]&i[6]&!i[5]);
 
@@ -2709,6 +2714,7 @@ assign out.v_store = (!i[6]&i[5]&!i[4]&i[2]);
 
 assign out.is_vector = (!i[14]&i[6]&!i[5]) | (!i[12]&i[6]&!i[5]) | (!i[6]&!i[4]&!i[3]
     &i[2]);
+
 
 assign out.legal = (!i[31]&!i[30]&i[29]&i[28]&!i[27]&!i[26]&!i[25]&!i[24]&!i[23]
     &!i[22]&i[21]&!i[20]&!i[19]&!i[18]&!i[17]&!i[16]&!i[15]&!i[14]&!i[11]
@@ -2722,23 +2728,23 @@ assign out.legal = (!i[31]&!i[30]&i[29]&i[28]&!i[27]&!i[26]&!i[25]&!i[24]&!i[23]
     &!i[27]&!i[26]&!i[25]&!i[6]&i[4]&!i[3]&i[1]&i[0]) | (!i[31]&!i[29]
     &!i[28]&!i[27]&!i[26]&!i[25]&i[14]&!i[13]&i[12]&!i[6]&i[4]&!i[3]&i[1]
     &i[0]) | (!i[31]&!i[30]&!i[29]&!i[28]&!i[27]&!i[26]&!i[6]&i[5]&i[4]
-    &!i[3]&i[1]&i[0]) | (!i[14]&!i[12]&!i[5]&i[4]&!i[3]&i[2]&i[1]&i[0]) | (
-    !i[14]&!i[13]&!i[12]&i[5]&!i[4]&!i[3]&i[1]&i[0]) | (!i[12]&!i[6]&!i[5]
-    &i[4]&!i[3]&i[1]&i[0]) | (i[14]&i[6]&i[5]&!i[4]&!i[3]&!i[2]&i[1]&i[0]) | (
-    i[12]&i[6]&i[5]&i[4]&!i[3]&!i[2]&i[1]&i[0]) | (!i[14]&!i[13]&i[5]
-    &!i[4]&!i[3]&!i[2]&i[1]&i[0]) | (!i[31]&!i[30]&!i[29]&!i[28]&!i[27]
-    &!i[26]&!i[25]&!i[24]&!i[23]&!i[22]&!i[21]&!i[20]&!i[19]&!i[18]&!i[17]
-    &!i[16]&!i[15]&!i[14]&!i[13]&!i[11]&!i[10]&!i[9]&!i[8]&!i[7]&!i[6]
-    &!i[5]&!i[4]&i[2]&i[1]&i[0]) | (!i[31]&!i[30]&!i[29]&!i[28]&!i[19]
-    &!i[18]&!i[17]&!i[16]&!i[15]&!i[14]&!i[13]&!i[12]&!i[11]&!i[10]&!i[9]
-    &!i[8]&!i[7]&!i[6]&!i[5]&!i[4]&i[2]&i[1]&i[0]) | (!i[31]&!i[29]&!i[28]
-    &!i[27]&!i[26]&!i[25]&!i[14]&!i[13]&!i[12]&!i[6]&!i[3]&i[1]&i[0]) | (
-    i[13]&i[6]&i[5]&i[4]&!i[3]&!i[2]&i[1]&i[0]) | (!i[13]&!i[12]&!i[5]
-    &i[4]&!i[3]&i[2]&i[1]&i[0]) | (!i[13]&!i[6]&!i[5]&!i[4]&!i[3]&i[1]
-    &i[0]) | (i[13]&i[12]&!i[5]&i[4]&!i[3]&i[2]&i[1]&i[0]) | (i[13]&!i[6]
+    &!i[3]&i[1]&i[0]) | (!i[14]&!i[13]&!i[12]&i[5]&!i[4]&!i[3]&i[1]&i[0]) | (
+    !i[12]&!i[6]&!i[5]&i[4]&!i[3]&i[1]&i[0]) | (i[14]&i[6]&i[5]&!i[4]
+    &!i[3]&!i[2]&i[1]&i[0]) | (i[12]&i[6]&i[5]&i[4]&!i[3]&!i[2]&i[1]&i[0]) | (
+    !i[14]&!i[13]&i[5]&!i[4]&!i[3]&!i[2]&i[1]&i[0]) | (!i[31]&!i[30]
+    &!i[29]&!i[28]&!i[27]&!i[26]&!i[25]&!i[24]&!i[23]&!i[22]&!i[21]&!i[20]
+    &!i[19]&!i[18]&!i[17]&!i[16]&!i[15]&!i[14]&!i[13]&!i[11]&!i[10]&!i[9]
+    &!i[8]&!i[7]&!i[6]&!i[5]&!i[4]&i[2]&i[1]&i[0]) | (!i[31]&!i[30]&!i[29]
+    &!i[28]&!i[19]&!i[18]&!i[17]&!i[16]&!i[15]&!i[14]&!i[13]&!i[12]&!i[11]
+    &!i[10]&!i[9]&!i[8]&!i[7]&!i[6]&!i[5]&!i[4]&i[2]&i[1]&i[0]) | (!i[31]
+    &!i[29]&!i[28]&!i[27]&!i[26]&!i[25]&!i[14]&!i[13]&!i[12]&!i[6]&!i[3]
+    &i[1]&i[0]) | (i[13]&i[6]&i[5]&i[4]&!i[3]&!i[2]&i[1]&i[0]) | (!i[13]
+    &!i[6]&!i[5]&!i[4]&!i[3]&i[1]&i[0]) | (i[13]&!i[5]&i[4]&!i[3]&i[2]
+    &i[1]&i[0]) | (!i[12]&!i[5]&i[4]&!i[3]&i[2]&i[1]&i[0]) | (i[13]&!i[6]
     &!i[5]&i[4]&!i[3]&i[1]&i[0]) | (!i[14]&!i[12]&!i[6]&!i[4]&!i[3]&i[1]
     &i[0]) | (i[6]&i[5]&!i[4]&i[3]&i[2]&i[1]&i[0]) | (!i[6]&!i[3]&i[2]
     &i[1]&i[0]);
+
 
 
 
