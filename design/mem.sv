@@ -32,10 +32,13 @@ module mem
    input logic [`RV_DCCM_BITS-1:0]  dccm_rd_addr_lo,
    input logic [`RV_DCCM_BITS-1:0]  dccm_rd_addr_hi,
    input logic [`RV_DCCM_FDATA_WIDTH-1:0]  dccm_wr_data,
+   input logic [`RV_DCCM_FDATA_WIDTH-1:0]  dccm_wr_data2,//JosePablo 
 
 
    output logic [`RV_DCCM_FDATA_WIDTH-1:0]  dccm_rd_data_lo,
    output logic [`RV_DCCM_FDATA_WIDTH-1:0]  dccm_rd_data_hi,
+   output logic [`RV_DCCM_FDATA_WIDTH-1:0]  dccm_rd_data2_lo, //JosePablo
+   input logic is_vector_store, //JosePablo
 
 
 `ifdef RV_ICCM_ENABLE

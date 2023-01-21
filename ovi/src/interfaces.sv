@@ -21,7 +21,8 @@ endinterface
 
 interface core_response_loadstore_bus();
 	wire [0:0] load_valid;
-	wire [32-1:0] load_data;
+	//wire [`CPU_PACKET_WIDTH-1:0] load_data;
+	wire [64-1:0] load_data;
 	wire [0:0] mem_ready;
 endinterface
 
@@ -29,7 +30,10 @@ interface core_petition_loadstore_bus();
 	wire [`OVI_SEW_WIDTH-1:0] sew;
 	wire [0:0] load_valid;
 	wire [0:0] store_valid;
-	wire [`OVI_DATA_WIDTH-1:0] store_data;
+	//wire [`CPU_PACKET_WIDTH-1:0] store_data;
+	//wire [(`CPU_PACKET_WIDTH>>3)-1:0] store_byen;
+	wire [64-1:0] store_data;
+	wire [(64>>3)-1:0] store_byen;
 	wire [32-1:0] mem_addr;
 endinterface
 

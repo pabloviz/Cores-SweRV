@@ -123,7 +123,7 @@ assign VPU_MASK_IDX_CREDIT = 1'b0;
 
 //OVI<->CPU Load & Store
 assign CORE_PETITION_LOADSTORE.mem_addr = reg_baseaddr + addr_offset; 
-assign CORE_PETITION_LOADSTORE.sew = 2; //hardcoded for 32-bit petitions, which is what the core accepts.
+assign CORE_PETITION_LOADSTORE.sew = instr_sew; 
 wire [8-1:0] extra_elements = (instr_vl % (512>>reg_instrlogbits));
 //Sent packets
 wire [12-1:0] chunk = sent_packets[15:`SUBPACKET_BITS];
@@ -138,8 +138,13 @@ wire last_load_packet = (load_packets+1 == n_packets);
 wire last_load_chunk_offset = last_load_packet | &load_chunk_offset; //last chunk or chunk_offset=1111
 assign CORE_PETITION_LOADSTORE.load_valid = (curr_state == SEND_DATA) && send_load_petition;
 //Store
+
 assign CORE_PETITION_LOADSTORE.store_valid = send_store_petition; 
 assign CORE_PETITION_LOADSTORE.store_data = BUFFER_STORE[chunk][chunk_offset*`CPU_PACKET_WIDTH+:`CPU_PACKET_WIDTH];
+wire [$clog2(`CPU_PACKET_WIDTH) : 0] extra_bytes = ((instr_vl << reg_instrlogbits)&(`CPU_PACKET_WIDTH -1))>>3;
+wire [7:0] byte_enable =  (1<<extra_bytes)-1;
+assign CORE_PETITION_LOADSTORE.store_byen = last_packet ? byte_enable : -1;
+
 
 initial
 begin
@@ -167,7 +172,8 @@ begin
 				sbid_counter <= sbid_counter + 1;
 				sent_packets <= 0;
 				load_packets <= 0;
-				n_packets <= (CORE_ISSUE.vl << instrlogbits) >> $clog2(`CPU_PACKET_WIDTH);
+				n_packets <= ((CORE_ISSUE.vl << instrlogbits) >> $clog2(`CPU_PACKET_WIDTH)) +
+					      ((((CORE_ISSUE.vl << instrlogbits)&(`CPU_PACKET_WIDTH -1))!=0)? 16'b1 : 16'b0); //If it is not evenly diveded, one extra packet :)
 				instr_vl <= CORE_ISSUE.vl;
 				instr_sew <= CORE_ISSUE.sew;
 				instr_is_load <= CORE_ISSUE.instr[6:0] == 7'b0000111;
@@ -212,7 +218,7 @@ begin
 			//Update addr if we send a store petition
 			if (send_store_petition) begin
 				//8 -> +1, 16 -> +2, 32 -> +4, 64 -> +8
-				addr_offset <= addr_offset + (reg_instrbits>>3);
+				addr_offset <= addr_offset + (`CPU_PACKET_WIDTH >> 3); 
 				sent_packets <= sent_packets+1;
 			end
 		end
@@ -237,7 +243,7 @@ begin
 			end
 			if (send_load_petition) begin
 				//8 -> +1, 16 -> +2, 32 -> +4, 64 -> +8
-				addr_offset <= addr_offset + (reg_instrbits>>3);
+				addr_offset <= addr_offset + (`CPU_PACKET_WIDTH >> 3); 
 				sent_packets <= sent_packets+1;
 			end
 		end

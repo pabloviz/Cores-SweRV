@@ -41,9 +41,13 @@ module lsu_dccm_mem
    input logic [`RV_DCCM_BITS-1:0]  dccm_rd_addr_lo,                     // read address
    input logic [`RV_DCCM_BITS-1:0]  dccm_rd_addr_hi,                     // read address for the upper bank in case of a misaligned access
    input logic [`RV_DCCM_FDATA_WIDTH-1:0]  dccm_wr_data,                 // write data
+   input logic [`RV_DCCM_FDATA_WIDTH-1:0]  dccm_wr_data2,                 // write data
 
    output logic [`RV_DCCM_FDATA_WIDTH-1:0] dccm_rd_data_lo,              // read data from the lo bank
    output logic [`RV_DCCM_FDATA_WIDTH-1:0] dccm_rd_data_hi,              // read data from the hi bank
+   //JosePablo
+   output logic [`RV_DCCM_FDATA_WIDTH-1:0] dccm_rd_data2_lo,              // read data from the lo bank
+   input logic is_vector_store,
 
    input  logic         scan_mode
 );
@@ -53,6 +57,7 @@ module lsu_dccm_mem
    localparam DCCM_WIDTH_BITS = $clog2(DCCM_BYTE_WIDTH);
    localparam DCCM_INDEX_BITS = (DCCM_BITS - DCCM_BANK_BITS - DCCM_WIDTH_BITS);
 
+   logic [DCCM_NUM_BANKS-1:0]         extra_bank; //JosePablo
    logic [DCCM_NUM_BANKS-1:0]         wren_bank;
    logic [DCCM_NUM_BANKS-1:0]         rden_bank;
    logic [DCCM_NUM_BANKS-1:0] [DCCM_BITS-1:(DCCM_BANK_BITS+2)]   addr_bank;
@@ -82,6 +87,9 @@ module lsu_dccm_mem
    assign dccm_rd_data_lo[DCCM_FDATA_WIDTH-1:0]  = lsu_freeze_dc3_q ? dccm_rd_data_lo_q[DCCM_FDATA_WIDTH-1:0] : dccm_bank_dout[dccm_rd_addr_lo_q[DCCM_WIDTH_BITS+:DCCM_BANK_BITS]][DCCM_FDATA_WIDTH-1:0];
    assign dccm_rd_data_hi[DCCM_FDATA_WIDTH-1:0]  = lsu_freeze_dc3_q ? dccm_rd_data_hi_q[DCCM_FDATA_WIDTH-1:0] : dccm_bank_dout[dccm_rd_addr_hi_q[DCCM_WIDTH_BITS+:DCCM_BANK_BITS]][DCCM_FDATA_WIDTH-1:0];
 
+   //JosePablo: +1 element of 32 bits
+   assign dccm_rd_data2_lo[DCCM_FDATA_WIDTH-1:0]  = lsu_freeze_dc3_q ? dccm_rd_data_lo_q[DCCM_FDATA_WIDTH-1:0] : dccm_bank_dout[dccm_rd_addr_lo_q[DCCM_WIDTH_BITS+:DCCM_BANK_BITS] + 1][DCCM_FDATA_WIDTH-1:0];
+
    rvdff  #(1) lsu_freeze_dc3ff(.din(lsu_freeze_dc3), .dout(lsu_freeze_dc3_q), .clk(free_clk), .*);
    rvdffe #(DCCM_FDATA_WIDTH) dccm_rd_data_loff(.din(dccm_rd_data_lo), .dout(dccm_rd_data_lo_q), .en(~lsu_freeze_dc3_q), .*);
    rvdffe #(DCCM_FDATA_WIDTH) dccm_rd_data_hiff(.din(dccm_rd_data_hi), .dout(dccm_rd_data_hi_q), .en(~lsu_freeze_dc3_q), .*);
@@ -98,11 +106,17 @@ module lsu_dccm_mem
    // assign rd_addr_odd[(DCCM_BANK_BITS+DCCM_WIDTH_BITS)+:DCCM_INDEX_BITS]  = dccm_rd_addr_lo[2] ? dccm_rd_addr_lo[(DCCM_BANK_BITS+DCCM_WIDTH_BITS)+:DCCM_INDEX_BITS] :
    //                                                                                               dccm_rd_addr_hi[(DCCM_BANK_BITS+DCCM_WIDTH_BITS)+:DCCM_INDEX_BITS];
 
+	//JosePablo
+   wire [`RV_DCCM_BITS-1:0]  dccm_wr_addr_extra = dccm_wr_addr + 4;
+//   wire [`RV_DCCM_BITS-1:0]  dccm_rd_addr_lo_extra = dccm_rd_addr_lo + 4;
+
    // 8 Banks, 16KB each (2048 x 72)
    for (genvar i=0; i<DCCM_NUM_BANKS; i++) begin: mem_bank
-      assign  wren_bank[i]        = dccm_wren & (dccm_wr_addr[2+:DCCM_BANK_BITS] == i);
-      assign  rden_bank[i]        = dccm_rden & ((dccm_rd_addr_hi[2+:DCCM_BANK_BITS] == i) | (dccm_rd_addr_lo[2+:DCCM_BANK_BITS] == i));
-      assign  addr_bank[i][(DCCM_BANK_BITS+DCCM_WIDTH_BITS)+:DCCM_INDEX_BITS] = wren_bank[i] ? dccm_wr_addr[(DCCM_BANK_BITS+DCCM_WIDTH_BITS)+:DCCM_INDEX_BITS] :
+      assign extra_bank[i]        = dccm_wren & is_vector_store & (dccm_wr_addr_extra[2+:DCCM_BANK_BITS] == i); //JosePablo
+      assign  wren_bank[i]        = dccm_wren & ((dccm_wr_addr[2+:DCCM_BANK_BITS] == i)); 
+      assign  rden_bank[i]        = dccm_rden & ((dccm_rd_addr_hi[2+:DCCM_BANK_BITS] == i) | (dccm_rd_addr_lo[2+:DCCM_BANK_BITS] == i)); 
+      assign  addr_bank[i][(DCCM_BANK_BITS+DCCM_WIDTH_BITS)+:DCCM_INDEX_BITS] = wren_bank[i] ? dccm_wr_addr[(DCCM_BANK_BITS+DCCM_WIDTH_BITS)+:DCCM_INDEX_BITS]  :
+      									       extra_bank[i] ? dccm_wr_addr_extra[(DCCM_BANK_BITS+DCCM_WIDTH_BITS)+:DCCM_INDEX_BITS]  ://JosePablo
                                                                                 (((dccm_rd_addr_hi[2+:DCCM_BANK_BITS] == i) & rd_unaligned) ?
                                                                                                     dccm_rd_addr_hi[(DCCM_BANK_BITS+DCCM_WIDTH_BITS)+:DCCM_INDEX_BITS] :
                                                                                                     dccm_rd_addr_lo[(DCCM_BANK_BITS+DCCM_WIDTH_BITS)+:DCCM_INDEX_BITS]);
@@ -116,18 +130,17 @@ module lsu_dccm_mem
       // end
 
       // clock gating section
-      assign  dccm_clken[i] = (wren_bank[i] | rden_bank[i] | clk_override) & ~lsu_freeze_dc3;
+      assign  dccm_clken[i] = (extra_bank[i] | wren_bank[i] | rden_bank[i] | clk_override) & ~lsu_freeze_dc3;
       rvoclkhdr lsu_dccm_cgc (.en(dccm_clken[i]), .l1clk(dccm_clk[i]), .*);
       // end clock gating section
 
       `RV_DCCM_DATA_CELL  dccm_bank (
                                      // Primary ports
                                      .CLK(dccm_clk[i]),
-                                     .WE(wren_bank[i]),
+                                     .WE(wren_bank[i] | extra_bank[i]),
                                      .ADR(addr_bank[i]),
-                                     .D(dccm_wr_data[DCCM_FDATA_WIDTH-1:0]),
+                                     .D(extra_bank[i] ? dccm_wr_data2[DCCM_FDATA_WIDTH-1:0] : dccm_wr_data[DCCM_FDATA_WIDTH-1:0]),
                                      .Q(dccm_bank_dout[i][DCCM_FDATA_WIDTH-1:0])
-
                                     );
 
    end : mem_bank

@@ -337,9 +337,12 @@ module swerv_wrapper
    logic [DCCM_BITS-1:0]  dccm_rd_addr_lo;
    logic [DCCM_BITS-1:0]  dccm_rd_addr_hi;
    logic [DCCM_FDATA_WIDTH-1:0]  dccm_wr_data;
+   logic [`RV_DCCM_FDATA_WIDTH-1:0]  dccm_wr_data2;//JosePablo 
 
    logic [DCCM_FDATA_WIDTH-1:0]  dccm_rd_data_lo;
    logic [DCCM_FDATA_WIDTH-1:0]  dccm_rd_data_hi;
+   logic [DCCM_FDATA_WIDTH-1:0]  dccm_rd_data2_lo; //JosePablo
+   logic  is_vector_store; //JosePablo
 
    logic         lsu_freeze_dc3;
 

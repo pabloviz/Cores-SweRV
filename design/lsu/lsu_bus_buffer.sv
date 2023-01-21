@@ -36,6 +36,8 @@ function automatic logic [2:0] f_Enc8to3;
 endfunction // f_Enc8to3
 
 
+`include "definitions.sv"
+
 module lsu_bus_buffer
    import swerv_types::*;
 (
@@ -128,7 +130,7 @@ module lsu_bus_buffer
    output logic                                lsu_nonblock_load_data_error,    // non block load has an error
    output logic [`RV_LSU_NUM_NBLOAD_WIDTH-1:0] lsu_nonblock_load_data_tag,      // the tag of the non block load sending the data/error
    output logic [31:0]                         lsu_nonblock_load_data,          // Data of the non block load
-
+ 
    // PMU events
    output logic                         lsu_pmu_bus_trxn,
    output logic                         lsu_pmu_bus_misaligned,
@@ -263,7 +265,7 @@ module lsu_bus_buffer
    logic   [DEPTH-1:0][DEPTH_LOG2-1:0]  buf_dualtag;
    logic   [DEPTH-1:0]                  buf_nb;
    logic   [DEPTH-1:0]                  buf_error;
-   logic   [DEPTH-1:0][31:0]            buf_data;
+   logic   [DEPTH-1:0][32-1:0]          buf_data; //JosePablo: This was 32
    logic   [DEPTH-1:0][DEPTH-1:0]       buf_age, buf_age_younger, buf_age_temp;
 
    state_t [DEPTH-1:0]                  buf_nxtstate;
@@ -401,11 +403,27 @@ module lsu_bus_buffer
       assign ld_byte_ibuf_hit_lo[i] = ld_addr_ibuf_hit_lo & ibuf_byteen[i] & ldst_byteen_lo_dc2[i];
       assign ld_byte_ibuf_hit_hi[i] = ld_addr_ibuf_hit_hi & ibuf_byteen[i] & ldst_byteen_hi_dc2[i];
    end
+ 
+   //JosePablo
+//   wire [$clog2(64/32)-1:0] offset_in_data = lsu_addr_dc2[2:2]; //5:2 for 512
+	wire offset_in_data = 0;
 
    always_comb begin
       ld_fwddata_buf_lo[31:0] = {{8{ld_byte_ibuf_hit_lo[3]}},{8{ld_byte_ibuf_hit_lo[2]}},{8{ld_byte_ibuf_hit_lo[1]}},{8{ld_byte_ibuf_hit_lo[0]}}} & ibuf_data[31:0];
       ld_fwddata_buf_hi[31:0] = {{8{ld_byte_ibuf_hit_hi[3]}},{8{ld_byte_ibuf_hit_hi[2]}},{8{ld_byte_ibuf_hit_hi[1]}},{8{ld_byte_ibuf_hit_hi[0]}}} & ibuf_data[31:0];
       for (int i=0; i<DEPTH; i++) begin
+/*
+         ld_fwddata_buf_lo[7:0]   |= {8{ld_byte_hitvecfn_lo[0][i]}} & buf_data[i][offset_in_data*32 +: 8]; //    [7:0];
+         ld_fwddata_buf_lo[15:8]  |= {8{ld_byte_hitvecfn_lo[1][i]}} & buf_data[i][offset_in_data*32+8 +: 8]; //[15:8];
+         ld_fwddata_buf_lo[23:16] |= {8{ld_byte_hitvecfn_lo[2][i]}} & buf_data[i][offset_in_data*32+16 +: 8]; //[23:16];
+         ld_fwddata_buf_lo[31:24] |= {8{ld_byte_hitvecfn_lo[3][i]}} & buf_data[i][offset_in_data*32+24 +: 8]; //[31:24];
+
+         ld_fwddata_buf_hi[7:0]   |= {8{ld_byte_hitvecfn_hi[0][i]}} & buf_data[i][offset_in_data*32 +: 8];// [7:0];
+         ld_fwddata_buf_hi[15:8]  |= {8{ld_byte_hitvecfn_hi[1][i]}} & buf_data[i][offset_in_data*32+8 +: 8];// [15:8];
+         ld_fwddata_buf_hi[23:16] |= {8{ld_byte_hitvecfn_hi[2][i]}} & buf_data[i][offset_in_data*32+16 +: 8];// [23:16];
+         ld_fwddata_buf_hi[31:24] |= {8{ld_byte_hitvecfn_hi[3][i]}} & buf_data[i][offset_in_data*32+24 +: 8];// [31:24];
+*/
+
          ld_fwddata_buf_lo[7:0]   |= {8{ld_byte_hitvecfn_lo[0][i]}} & buf_data[i][7:0];
          ld_fwddata_buf_lo[15:8]  |= {8{ld_byte_hitvecfn_lo[1][i]}} & buf_data[i][15:8];
          ld_fwddata_buf_lo[23:16] |= {8{ld_byte_hitvecfn_lo[2][i]}} & buf_data[i][23:16];
@@ -415,6 +433,7 @@ module lsu_bus_buffer
          ld_fwddata_buf_hi[15:8]  |= {8{ld_byte_hitvecfn_hi[1][i]}} & buf_data[i][15:8];
          ld_fwddata_buf_hi[23:16] |= {8{ld_byte_hitvecfn_hi[2][i]}} & buf_data[i][23:16];
          ld_fwddata_buf_hi[31:24] |= {8{ld_byte_hitvecfn_hi[3][i]}} & buf_data[i][31:24];
+
       end
    end
 
@@ -516,8 +535,12 @@ module lsu_bus_buffer
    assign obuf_byteen0_in[7:0] = ibuf_buf_byp ? (lsu_addr_dc5[2] ? {ldst_byteen_lo_dc5[3:0],4'b0} : {4'b0,ldst_byteen_lo_dc5[3:0]}) :
                                                 (buf_addr[CmdPtr0][2] ? {buf_byteen[CmdPtr0],4'b0} : {4'b0,buf_byteen[CmdPtr0]});
    assign obuf_byteen1_in[7:0] = buf_addr[CmdPtr1][2] ? {buf_byteen[CmdPtr1],4'b0} : {4'b0,buf_byteen[CmdPtr1]};
+
+//JosePablo
    assign obuf_data0_in[63:0]  = ibuf_buf_byp ? (lsu_addr_dc5[2] ? {store_data_lo_dc5[31:0],32'b0} : {32'b0,store_data_lo_dc5[31:0]}) :
                                                 (buf_addr[CmdPtr0][2] ? {buf_data[CmdPtr0],32'b0} : {32'b0,buf_data[CmdPtr0]});
+//                                                (buf_addr[CmdPtr0][2] ? {buf_data[CmdPtr0][offset_in_data*32 +: 32],32'b0} : {32'b0,buf_data[CmdPtr0][offset_in_data*32 +: 32]});
+//   assign obuf_data1_in[63:0]  = buf_addr[CmdPtr1][2] ? {buf_data[CmdPtr1][offset_in_data*32 +: 32],32'b0} : {32'b0,buf_data[CmdPtr1][offset_in_data*32 +: 32]};
    assign obuf_data1_in[63:0]  = buf_addr[CmdPtr1][2] ? {buf_data[CmdPtr1],32'b0} : {32'b0,buf_data[CmdPtr1]};
    for (genvar i=0 ;i<8; i++) begin
       assign obuf_byteen_in[i] = obuf_byteen0_in[i] | (obuf_merge_en & obuf_byteen1_in[i]);
@@ -761,6 +784,8 @@ module lsu_bus_buffer
    end
 
    // Load signals for freeze
+//JosePablo
+   //assign ld_block_bus_data[31:0]     = 32'(({({32{buf_dual[FreezePtr]}} & buf_data[buf_dualtag[FreezePtr]][offset_in_data*32 +: 32]), buf_data[FreezePtr][offset_in_data*32 +: 32]}) >> (8*buf_addr[FreezePtr][1:0]));
    assign ld_block_bus_data[31:0]     = 32'(({({32{buf_dual[FreezePtr]}} & buf_data[buf_dualtag[FreezePtr]]), buf_data[FreezePtr][31:0]}) >> (8*buf_addr[FreezePtr][1:0]));
    assign ld_precise_bus_error         = (buf_error[FreezePtr] | (buf_dual[FreezePtr] & buf_error[buf_dualtag[FreezePtr]])) & ~buf_write[FreezePtr] & buf_rst[FreezePtr] & lsu_freeze_dc3 & ld_freeze_rst & ~flush_dc3;   // Don't give bus error for interrupts
    assign ld_bus_error_addr_dc3[31:0]  = buf_addr[FreezePtr][31:0];
@@ -786,8 +811,12 @@ module lsu_bus_buffer
           lsu_nonblock_load_data_error_hi      |= lsu_bus_clk_en_q & (buf_state[i] == DONE) & buf_rst[i] & buf_error[i] & buf_nb[i] & (buf_dual[i] & buf_dualhi[i]);
           lsu_nonblock_load_data_error_lo      |= lsu_bus_clk_en_q & (buf_state[i] == DONE) & buf_rst[i] & buf_error[i] & buf_nb[i] & (~buf_dual[i] | ~buf_dualhi[i]);
           lsu_nonblock_load_data_tag[DEPTH_LOG2-1:0]   |= DEPTH_LOG2'(i) & {DEPTH_LOG2{((buf_state[i] == DONE) & buf_nb[i] & buf_rst[i] & (~buf_dual[i] | ~buf_dualhi[i]))}};
+	//JosePablo
+          //lsu_nonblock_load_data_lo[31:0]      |= buf_data[i][offset_in_data*32 +: 32] & {32{((buf_state[i] == DONE) & buf_nb[i] & buf_rst[i] & (~buf_dual[i] | ~buf_dualhi[i]))}};
+          //lsu_nonblock_load_data_hi[31:0]      |= buf_data[i][offset_in_data*32 +: 32] & {32{((buf_state[i] == DONE) & buf_nb[i] & buf_rst[i] & (buf_dual[i] & buf_dualhi[i]))}};
           lsu_nonblock_load_data_lo[31:0]      |= buf_data[i][31:0] & {32{((buf_state[i] == DONE) & buf_nb[i] & buf_rst[i] & (~buf_dual[i] | ~buf_dualhi[i]))}};
           lsu_nonblock_load_data_hi[31:0]      |= buf_data[i][31:0] & {32{((buf_state[i] == DONE) & buf_nb[i] & buf_rst[i] & (buf_dual[i] & buf_dualhi[i]))}};
+
       end
    end
 

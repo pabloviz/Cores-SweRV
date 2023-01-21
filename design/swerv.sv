@@ -73,8 +73,11 @@ module swerv
    output logic [`RV_DCCM_BITS-1:0]          dccm_rd_addr_lo,
    output logic [`RV_DCCM_BITS-1:0]          dccm_rd_addr_hi,
    output logic [`RV_DCCM_FDATA_WIDTH-1:0]   dccm_wr_data,
+   output logic [`RV_DCCM_FDATA_WIDTH-1:0]   dccm_wr_data2,//JosePablo 
 
    input logic [`RV_DCCM_FDATA_WIDTH-1:0]    dccm_rd_data_lo,
+   input logic [`RV_DCCM_FDATA_WIDTH-1:0]    dccm_rd_data2_lo, //JosePablo
+   output logic is_vector_store, //JosePablo
    input logic [`RV_DCCM_FDATA_WIDTH-1:0]    dccm_rd_data_hi,
 
 `ifdef RV_ICCM_ENABLE
@@ -1055,17 +1058,75 @@ module swerv
    assign dec_lsu_offset_d_vec = 0; 
    assign dec_lsu_offset_d = lsu_p_vec.valid ? dec_lsu_offset_d_vec : dec_lsu_offset_d_decode;
 
-   //rs1 = addr
+   //ADDR
    assign exu_lsu_rs1_d_vec = core_petition_loadstore.mem_addr; 
    assign exu_lsu_rs1_d = lsu_p_vec.valid ? exu_lsu_rs1_d_vec : exu_lsu_rs1_d_exu;
 
-   //rs2 = store data
-   assign exu_lsu_rs2_d_vec = core_petition_loadstore.store_data; 
+   //BUFFER STORE DATA
+   reg [8-1:0][`CPU_PACKET_WIDTH-1:0] hide_vector_store_data;
+   reg [8-1:0][8-1:0] hide_vector_store_byen;
+   reg [2:0] in_pointer = 0;
+   reg [2:0] out_pointer = 0;
+   wire vstore_waiting = in_pointer != out_pointer;
+   always @(posedge clk)
+   begin
+	if ((lsu_axi_wvalid | dccm_wren) & vstore_waiting) begin
+		out_pointer <= out_pointer + 1;
+	end
+	if (core_petition_loadstore.store_valid) begin
+		hide_vector_store_data[in_pointer] <= core_petition_loadstore.store_data;
+		hide_vector_store_byen[in_pointer] <= core_petition_loadstore.store_byen;
+		in_pointer <= in_pointer + 1;
+	end
+   end
+
+   assign core_response_loadstore.mem_ready = lsu_axi_arready & lsu_axi_awready;
+
+   //to LSU
+   assign exu_lsu_rs2_d_vec = -1; //core_petition_loadstore.store_data; 
    assign exu_lsu_rs2_d = core_petition_loadstore.store_valid ? exu_lsu_rs2_d_vec : exu_lsu_rs2_d_exu;
 
-   assign core_response_loadstore.mem_ready = dccm_ready; //lsu_idle_any;  
-   assign core_response_loadstore.load_valid = lsu_nonblock_load_data_valid; //Only if its vec....
-   assign core_response_loadstore.load_data = lsu_nonblock_load_data;
+   //AXI
+   wire [63:0] original_lsu_axi_wdata;
+   wire [7:0] original_lsu_axi_wstrb;
+   assign lsu_axi_wdata = vstore_waiting ? hide_vector_store_data[out_pointer] : original_lsu_axi_wdata;
+   assign lsu_axi_wstrb = vstore_waiting ? hide_vector_store_byen[out_pointer] : original_lsu_axi_wstrb;
+
+   //DCCM: Warning, no ECC
+   wire [`RV_DCCM_FDATA_WIDTH-1:0] vector_store_data_ecc;
+   rvecc_encode vector_ecc_encode (
+         .din(hide_vector_store_data[out_pointer][32-1:0]),
+         .ecc_out(vector_store_data_ecc)
+   );
+   wire [`RV_DCCM_FDATA_WIDTH-1:0] vector_store_data2_ecc;
+   rvecc_encode vector_ecc_encode2 (
+         .din(hide_vector_store_data[out_pointer][64-1:32]),
+         .ecc_out(vector_store_data2_ecc)
+   );
+   wire [`RV_DCCM_FDATA_WIDTH-1:0] original_dccm_wr_data; //coming from lsu
+   assign dccm_wr_data = vstore_waiting ? {vector_store_data_ecc, hide_vector_store_data[out_pointer][32-1:0]} : original_dccm_wr_data;
+   assign dccm_wr_data2 = {vector_store_data2_ecc, hide_vector_store_data[out_pointer][64-1:32]};
+   assign is_vector_store = vstore_waiting;
+
+
+   reg delay_load_valid = 0;
+   reg delay_load_valid_1 = 0;
+   reg vector_load_is_dccm = 0;
+   always @(posedge clk)
+   begin
+	delay_load_valid_1 <= delay_load_valid;
+	delay_load_valid <= core_petition_loadstore.load_valid;
+	if (core_petition_loadstore.load_valid) begin
+		vector_load_is_dccm <= (core_petition_loadstore.mem_addr >= 32'hF0040000);
+	end
+   end
+
+   //hijacked!!! Should only do this if it is a vector petition....
+
+   assign core_response_loadstore.load_valid = vector_load_is_dccm ? delay_load_valid_1
+								   : lsu_axi_rvalid; 
+   assign core_response_loadstore.load_data = vector_load_is_dccm ? {dccm_rd_data2_lo[32-1:0], dccm_rd_data_lo[32-1:0]}
+								   : lsu_axi_rdata;
 
 
    // fetch
@@ -1087,6 +1148,9 @@ module swerv
    lsu lsu (
       .clk_override(dec_tlu_lsu_clk_override),
       .rst_l(core_rst_l),
+      .lsu_axi_wdata(original_lsu_axi_wdata), //JosePablo
+      .lsu_axi_wstrb(original_lsu_axi_wstrb),
+      .dccm_wr_data(original_dccm_wr_data),
       .*
    );
 
